@@ -1,1 +1,207 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>RISKuj – školní kvíz</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div id="app">
+
+    <!-- Header (společný) -->
+    <header class="app-header">
+      <div class="app-title">
+        <span class="app-title__logo" aria-hidden="true">π</span>
+        <span class="app-title__text">RISKuj</span>
+      </div>
+
+      <div class="app-header__actions">
+        <!-- záměrně viditelné jen pro vývoj; později skryjeme a otevřeme zkratkou/gestem -->
+        <button id="btnOpenTeacher" class="btn btn--ghost" type="button" aria-haspopup="dialog">
+          Učitel
+        </button>
+      </div>
+    </header>
+
+    <!-- Hlavní obsah -->
+    <main class="app-main">
+
+      <!-- SCREEN: START -->
+      <section id="screenStart" class="screen is-active" data-screen="start" aria-label="Úvodní obrazovka">
+        <div class="card">
+          <h1>Vítej v RISKuj</h1>
+          <p class="muted">
+            Vyber ročník a témata, pak začni hru. (Zatím jen kostra.)
+          </p>
+
+          <div class="form-row">
+            <label for="selectGrade">Ročník</label>
+            <select id="selectGrade">
+              <!-- naplní JS -->
+            </select>
+          </div>
+
+          <div class="actions">
+            <button id="btnGoToSetup" class="btn btn--primary" type="button">
+              Vybrat témata
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN: SETUP (výběr témat/otázek) -->
+      <section id="screenSetup" class="screen" data-screen="setup" aria-label="Výběr témat a otázek">
+        <div class="card">
+          <h2>Výběr témat</h2>
+          <p class="muted">
+            Tady bude seznam témat (s přepínači) a volby obtížnosti/bodů.
+          </p>
+
+          <div class="split">
+            <div class="panel">
+              <h3>Témata</h3>
+              <div id="topicsList" class="list">
+                <!-- naplní JS -->
+              </div>
+            </div>
+
+            <div class="panel">
+              <h3>Filtry</h3>
+
+              <div class="form-row">
+                <label for="selectDifficulty">Obtížnost</label>
+                <select id="selectDifficulty">
+                  <!-- naplní JS -->
+                </select>
+              </div>
+
+              <div class="form-row">
+                <label for="selectPoints">Body</label>
+                <select id="selectPoints">
+                  <!-- naplní JS -->
+                </select>
+              </div>
+
+              <div class="actions actions--row">
+                <button id="btnBackToStart" class="btn" type="button">Zpět</button>
+                <button id="btnStartGame" class="btn btn--primary" type="button">Začít hru</button>
+              </div>
+
+              <p id="setupHint" class="hint">
+                <!-- JS: info typu „vyčerpáno“ / „vyber 2–3 témata“ -->
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN: GAME -->
+      <section id="screenGame" class="screen" data-screen="game" aria-label="Herní obrazovka">
+        <div class="card">
+          <div class="game-topbar">
+            <div class="badge" id="gameStatus">
+              <!-- JS: např. „Tým A na tahu“ -->
+              Hra není spuštěná
+            </div>
+
+            <div class="actions actions--row">
+              <button id="btnEndGame" class="btn btn--ghost" type="button">Ukončit</button>
+            </div>
+          </div>
+
+          <div class="question-area">
+            <h2 id="questionTitle">Otázka</h2>
+            <div id="questionText" class="question-text">
+              <!-- JS: text otázky -->
+              Tady se zobrazí otázka…
+            </div>
+
+            <div class="actions actions--row">
+              <button id="btnRevealAnswer" class="btn" type="button">Zobrazit odpověď</button>
+              <button id="btnNextQuestion" class="btn btn--primary" type="button">Další</button>
+            </div>
+
+            <div id="answerBox" class="answer-box is-hidden" aria-live="polite">
+              <h3>Odpověď</h3>
+              <div id="answerText" class="muted">
+                <!-- JS: odpověď -->
+              </div>
+
+              <div class="actions actions--row">
+                <button id="btnMarkCorrect" class="btn btn--primary" type="button">Správně</button>
+                <button id="btnMarkWrong" class="btn" type="button">Špatně</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="game-bottom">
+            <div class="panel">
+              <h3>Skóre</h3>
+              <div id="scoreBoard" class="list">
+                <!-- JS -->
+              </div>
+            </div>
+
+            <div class="panel">
+              <h3>Stav banky</h3>
+              <div id="bankStatus" class="list">
+                <!-- JS: např. dostupné otázky / vyčerpané -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER (volitelně) -->
+    <footer class="app-footer">
+      <span class="muted">Lokální verze (GitHub Pages) • bez backendu</span>
+    </footer>
+
+  </div>
+
+  <!-- TEACHER MODAL -->
+  <div id="teacherModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="teacherTitle">
+    <div class="modal__backdrop" data-close-modal></div>
+
+    <div class="modal__content" role="document">
+      <div class="modal__header">
+        <h2 id="teacherTitle">Učitelský modul</h2>
+        <button id="btnCloseTeacher" class="btn btn--ghost" type="button" aria-label="Zavřít">
+          ✕
+        </button>
+      </div>
+
+      <div class="modal__body">
+        <p class="muted">
+          Tady bude správa povolených témat a uložení do localStorage.
+        </p>
+
+        <div class="panel">
+          <h3>Povolená témata</h3>
+          <div id="teacherTopicsList" class="list">
+            <!-- JS -->
+          </div>
+        </div>
+
+        <div class="actions actions--row">
+          <button id="btnTeacherReset" class="btn" type="button">Reset</button>
+          <button id="btnTeacherSave" class="btn btn--primary" type="button">Uložit</button>
+        </div>
+
+        <p id="teacherHint" class="hint"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="data.js"></script>
+  <script src="teacher.js"></script>
+  <script src="game.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
 
