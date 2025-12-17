@@ -1,1 +1,368 @@
+/* =========================
+   RISKuj – starter styles
+   Minimal dark mode + screens
+   ========================= */
 
+:root{
+  --bg: #0b0f14;
+  --bg2: #0f1620;
+  --card: #121a24;
+  --panel: #0f1722;
+  --text: #e7eef7;
+  --muted: #a7b4c6;
+  --border: rgba(255,255,255,0.10);
+
+  --primary: #3b82f6;
+  --primary2: #2563eb;
+
+  --danger: #ef4444;
+
+  --shadow: 0 10px 30px rgba(0,0,0,0.35);
+
+  --radius: 16px;
+  --radius2: 12px;
+
+  --gap: 16px;
+
+  --tap: 44px; /* minimální touch target */
+}
+
+*{ box-sizing: border-box; }
+html, body{ height: 100%; }
+
+body{
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: radial-gradient(1200px 800px at 20% 0%, #111c2c 0%, var(--bg) 55%, #070a0f 100%);
+  color: var(--text);
+}
+
+#app{
+  min-height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+/* =========================
+   Header / Footer
+   ========================= */
+
+.app-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10,14,20,0.7);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app-title{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-title__logo{
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(59,130,246,0.25), rgba(59,130,246,0.05));
+  border: 1px solid rgba(59,130,246,0.25);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+
+.app-title__text{
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.app-footer{
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  background: rgba(10,14,20,0.55);
+  backdrop-filter: blur(10px);
+}
+
+/* =========================
+   Main layout
+   ========================= */
+
+.app-main{
+  padding: 16px;
+  display: grid;
+  place-items: start center;
+}
+
+.card{
+  width: min(980px, 100%);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.panel{
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius2);
+  padding: 12px;
+}
+
+.split{
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--gap);
+}
+
+.game-bottom{
+  margin-top: var(--gap);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+
+@media (max-width: 860px){
+  .split,
+  .game-bottom{
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================
+   Typography
+   ========================= */
+
+h1, h2, h3{
+  margin: 0 0 10px 0;
+  line-height: 1.15;
+}
+
+h1{ font-size: 28px; }
+h2{ font-size: 22px; }
+h3{ font-size: 16px; color: var(--muted); font-weight: 700; }
+
+p{ margin: 0 0 10px 0; }
+
+.muted{ color: var(--muted); }
+.hint{
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* =========================
+   Forms
+   ========================= */
+
+.form-row{
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+label{
+  font-size: 13px;
+  color: var(--muted);
+}
+
+select, input{
+  height: var(--tap);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.25);
+  color: var(--text);
+  padding: 0 12px;
+  outline: none;
+}
+
+select:focus, input:focus{
+  border-color: rgba(59,130,246,0.5);
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.15);
+}
+
+/* =========================
+   Buttons
+   ========================= */
+
+.actions{
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.actions--row{
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.btn{
+  height: var(--tap);
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.05s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:hover{
+  background: rgba(255,255,255,0.07);
+}
+
+.btn:active{
+  transform: translateY(1px);
+}
+
+.btn--primary{
+  border-color: rgba(59,130,246,0.55);
+  background: linear-gradient(180deg, rgba(59,130,246,0.35), rgba(37,99,235,0.20));
+}
+
+.btn--primary:hover{
+  border-color: rgba(59,130,246,0.75);
+  background: linear-gradient(180deg, rgba(59,130,246,0.42), rgba(37,99,235,0.26));
+}
+
+.btn--ghost{
+  background: transparent;
+}
+
+.btn:disabled,
+.btn.is-disabled{
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* =========================
+   Lists / badges
+   ========================= */
+
+.list{
+  display: grid;
+  gap: 10px;
+}
+
+.badge{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.game-topbar{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.question-area{
+  padding: 10px 0;
+}
+
+.question-text{
+  padding: 12px;
+  border-radius: var(--radius2);
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.18);
+  min-height: 84px;
+  white-space: pre-wrap;
+}
+
+.answer-box{
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: var(--radius2);
+  border: 1px solid rgba(59,130,246,0.35);
+  background: rgba(59,130,246,0.06);
+}
+
+/* =========================
+   Screen switch (important)
+   ========================= */
+
+.screen{
+  display: none;
+}
+
+.screen.is-active{
+  display: block;
+}
+
+/* helper */
+.is-hidden{
+  display: none !important;
+}
+
+/* =========================
+   Modal
+   ========================= */
+
+.modal{
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.modal__backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+}
+
+.modal__content{
+  position: relative;
+  width: min(720px, 100%);
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.modal__header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,0.18);
+}
+
+.modal__body{
+  padding: 14px;
+}
+
+/* =========================
+   Mobile polish (starter)
+   ========================= */
+
+@media (max-width: 520px){
+  h1{ font-size: 24px; }
+  .card{ padding: 14px; }
+  .app-main{ padding: 12px; }
+  .actions{ flex-direction: column; }
+  .btn{ width: 100%; }
+}
