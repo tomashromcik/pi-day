@@ -634,3 +634,9 @@ select:focus, input:focus{
   .actions{ flex-direction: column; }
   .btn{ width: 100%; }
 }
+
+/* qcard uvnitř topic-boxu – kompaktnější */
+.topic-box .qcard{
+  min-height: auto;
+}
+
