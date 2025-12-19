@@ -18,7 +18,6 @@
       </div>
 
       <div class="app-header__actions">
-        <!-- Později skryjeme + otevřeme zkratkou/gestem -->
         <button id="btnOpenTeacher" class="btn btn--ghost" type="button" aria-haspopup="dialog">
           Učitel
         </button>
@@ -31,9 +30,7 @@
       <section id="screenStart" class="screen is-active" data-screen="start" aria-label="Úvodní obrazovka">
         <div class="card">
           <h1>πdi kvíz</h1>
-          <p class="muted">
-            Zadejte název týmu. Pravidla si můžete promítnout.
-          </p>
+          <p class="muted">Zadejte název týmu. Pravidla si můžete promítnout.</p>
 
           <div class="form-row">
             <label for="teamName">Název týmu</label>
@@ -41,86 +38,43 @@
           </div>
 
           <div class="actions actions--row">
-            <button id="btnShowRules" class="btn" type="button" aria-haspopup="dialog">
-              Zobrazit pravidla
-            </button>
-            <button id="btnStartGame" class="btn btn--primary" type="button">
-              Riskuj
-            </button>
+            <button id="btnShowRules" class="btn" type="button" aria-haspopup="dialog">Zobrazit pravidla</button>
+            <button id="btnStartGame" class="btn btn--primary" type="button">Riskuj</button>
           </div>
 
           <p id="startHint" class="hint"></p>
         </div>
       </section>
 
-      <!-- SCREEN: GAMEBOARD -->
+      <!-- SCREEN: GAMEBOARD (NOVĚ: 3 sloupce A/B/C a všechna témata najednou) -->
       <section id="screenBoard" class="screen" data-screen="board" aria-label="Herní plocha">
-        <div class="board">
+        <div class="board2">
 
-          <!-- LEFT: Topics -->
-          <aside class="topics" aria-label="Témata">
-            <div class="panel panel--sticky">
-              <div class="panel__head">
-                <h2 class="panel__title">Témata</h2>
-                <div class="panel__meta muted" id="topicMeta">
-                  <!-- JS: např. "Zbývá: 24 otázek" -->
-                </div>
-              </div>
-
-              <div id="topicsList" class="topics__list">
-                <!-- JS: témata jako barevné karty -->
-                <!--
-                  <button class="topic-card" data-topic-id="..." type="button">
-                    <span class="topic-card__name">Geometrie</span>
-                    <span class="topic-card__state">…</span>
-                  </button>
-                -->
+          <div class="panel panel--sticky board2__head">
+            <div class="panel__head">
+              <h2 class="panel__title">Herní plocha</h2>
+              <div class="panel__meta muted" id="boardProgress">Otázky: 0/10</div>
+              <div class="panel__actions">
+                <button id="btnBackToStart" class="btn btn--ghost" type="button">Ukončit</button>
               </div>
             </div>
-          </aside>
 
-          <!-- RIGHT: Question grid -->
-          <section class="grid" aria-label="Otázky">
-            <div class="panel panel--sticky">
-              <div class="panel__head">
-                <h2 class="panel__title" id="gridTitle">Otázky</h2>
-                <div class="panel__meta muted" id="gridMeta">
-                  <!-- JS: např. "Vybrané téma: Geometrie" -->
-                </div>
-
-                <div class="panel__actions">
-                  <button id="btnBackToStart" class="btn btn--ghost" type="button">Ukončit</button>
-                </div>
-              </div>
-
-              <div id="questionGrid" class="question-grid">
-                <!-- JS: karty podle bodů (barva se sladí s tématem + body) -->
-                <!--
-                  <article class="qcard" data-points="100" data-topic-id="...">
-                    <div class="qcard__points">100</div>
-                    <div class="qcard__actions">
-                      <button class="btn btn--small" data-action="safe">Bez risku</button>
-                      <button class="btn btn--small btn--primary" data-action="risk">Riskuj</button>
-                    </div>
-                  </article>
-                -->
-              </div>
-
-              <p id="boardHint" class="hint"></p>
+            <div class="board2__counters muted" id="boardCounters">
+              A: 0/2 (risk 0/2) • B: 0/6 (risk 0/2) • C: 0/2 (risk 0/2)
             </div>
-          </section>
+          </div>
 
+          <div id="boardColumns" class="board2__cols"></div>
+
+          <p id="boardHint" class="hint"></p>
         </div>
       </section>
 
-      <!-- SCREEN: QUESTION (zobrazení otázky) -->
+      <!-- SCREEN: QUESTION -->
       <section id="screenQuestion" class="screen" data-screen="question" aria-label="Zobrazení otázky">
         <div class="card">
           <div class="qtopbar">
-            <div class="badge" id="qStatus">
-              <!-- JS: Téma + body + režim (bez/risk) -->
-            </div>
-
+            <div class="badge" id="qStatus"></div>
             <div class="actions actions--row">
               <button id="btnCloseQuestion" class="btn btn--ghost" type="button">Zpět na plochu</button>
             </div>
@@ -142,11 +96,6 @@
               <button id="btnMarkWrong" class="btn" type="button">Špatně</button>
             </div>
           </div>
-
-          <div class="panel" style="margin-top:16px;">
-            <h3>Skóre</h3>
-            <div id="scoreBoard" class="list"></div>
-          </div>
         </div>
       </section>
 
@@ -167,7 +116,6 @@
       </div>
       <div class="modal__body">
         <div id="rulesText" class="rules">
-          <!-- JS nebo statický text – podle toho, jak chcete promítat -->
           <p class="muted">Sem dáme pravidla (stručně, přehledně, promítatelné).</p>
         </div>
       </div>
@@ -197,6 +145,25 @@
         </div>
 
         <p id="teacherHint" class="hint"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT MODAL (po 10. otázce) -->
+  <div id="resultModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="modal__backdrop" data-close-modal></div>
+    <div class="modal__content" role="document">
+      <div class="modal__header">
+        <h2 id="resultTitle">Výsledek stanoviště</h2>
+        <button id="btnCloseResult" class="btn btn--ghost" type="button" aria-label="Zavřít">✕</button>
+      </div>
+      <div class="modal__body">
+        <div id="resultBody" class="rules"></div>
+
+        <div class="actions actions--row">
+          <button id="btnNewGame" class="btn" type="button">Nová hra</button>
+          <button id="btnBackHome" class="btn btn--primary" type="button">Zpět na úvod</button>
+        </div>
       </div>
     </div>
   </div>
