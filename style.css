@@ -542,6 +542,87 @@ select:focus, input:focus{
   color: var(--text);
 }
 
+.board2{
+  width: min(1180px, 100%);
+  display: grid;
+  gap: var(--gap);
+}
+
+.board2__head{
+  top: 72px;
+}
+
+.board2__counters{
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.board2__cols{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap);
+  align-items: start;
+}
+
+@media (max-width: 980px){
+  .board2__cols{ grid-template-columns: 1fr; }
+}
+
+.group-col{
+  display: grid;
+  gap: 12px;
+}
+
+.group-col__title{
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.topic-box{
+  --topic: var(--topic);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  overflow: hidden;
+}
+
+.topic-box__head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: radial-gradient(800px 180px at 0% 0%,
+    color-mix(in srgb, var(--topic) 22%, transparent),
+    transparent 55%
+  );
+}
+
+.topic-box__name{
+  font-weight: 900;
+}
+
+.topic-box__mini{
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.topic-box__cards{
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.qcard{
+  min-height: auto; /* v topic-boxu menší */
+}
+
+
 /* =========================
    Mobile polish (starter)
    ========================= */
