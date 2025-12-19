@@ -1,36 +1,102 @@
 /* game.js
-   Minimal engine pro Pí”di kvíz (RISKuj)
-   - vykreslí témata a grid bodů
-   - výběr otázky podle (téma + body)
-   - evidence použitých otázek => vyčerpání => disable
-   - základní skóre (zatím jednoduché; upravíme dle vašich domluvených pravidel)
+   Pí”di kvíz – engine (A/B/C skupiny napříč tématy)
+   Skupiny:
+   - A: 100–200 (celkem 2 otázky), risk max 2×
+   - B: 300–400 (celkem 6 otázek), risk max 2×
+   - C: 500     (celkem 2 otázky), risk max 2×
+
+   Bodování:
+   - Bez risku: správně +hodnota, špatně 0
+   - Riskuj: správně +(hodnota + bonus), špatně -100
+   - bonus = 50 % hodnoty (100→50, 200→100, 300→150, 400→200, 500→250)
+
+   Po 10. otázce: výsledkový modal (přepočet na 0–20, zaokrouhlení NAHORU)
+   RAW_MAX pro přepočet = 4900
 */
 
 (function () {
   "use strict";
 
-  // ------- interní stav -------
-  const state = {
-    teamName: "Tým",
-    allowedTopicIds: null,     // z Teacher settings
-    activeTopicId: null,
+  const LIMITS = { A: 2, B: 6, C: 2 };
+  const RISK_LIMITS = { A: 2, B: 2, C: 2 };
+  const RAW_MAX = 4900;
+  const PENALTY_RISK_WRONG = 100;
 
-    usedIds: new Set(),        // už použité otázky
-    current: null,             // aktuálně zobrazená otázka
-    score: 0,
+  const GROUPS = {
+    A: { title: "A (100–200)", points: [100, 200] },
+    B: { title: "B (300–400)", points: [300, 400] },
+    C: { title: "C (500)", points: [500] },
   };
 
-  // ------- helpers -------
-  function byId(arr, id) {
-    return arr.find(x => x.id === id) || null;
+  const state = {
+    teamName: "Tým",
+    allowedTopicIds: null,
+
+    usedIds: new Set(),
+    current: null,
+
+    // progress / quotas
+    totalPicked: 0,
+    pickedByGroup: { A: 0, B: 0, C: 0 },
+    riskUsedByGroup: { A: 0, B: 0, C: 0 },
+
+    // scoring
+    rawScore: 0,
+  };
+
+  function allQuestions() {
+    return window.DATA?.QUESTIONS || [];
+  }
+
+  function allTopics() {
+    return window.DATA?.TOPICS || [];
+  }
+
+  function allowedTopics() {
+    const topics = allTopics();
+    if (!state.allowedTopicIds || !state.allowedTopicIds.length) return topics;
+    const set = new Set(state.allowedTopicIds);
+    return topics.filter(t => set.has(t.id));
   }
 
   function topicById(id) {
-    return byId(window.DATA?.TOPICS || [], id);
+    return allTopics().find(t => t.id === id) || null;
   }
 
-  function clamp(n, a, b) {
-    return Math.max(a, Math.min(b, n));
+  function groupForPoints(points) {
+    if (points === 500) return "C";
+    if (points === 100 || points === 200) return "A";
+    if (points === 300 || points === 400) return "B";
+    return null;
+  }
+
+  function bonusFor(points) {
+    return points / 2; // 50% (100→50...)
+  }
+
+  function isFinished() {
+    return state.totalPicked >= 10;
+  }
+
+  function canPick(points) {
+    const g = groupForPoints(points);
+    if (!g) return false;
+    if (isFinished()) return false;
+    return state.pickedByGroup[g] < LIMITS[g];
+  }
+
+  function canRisk(points) {
+    const g = groupForPoints(points);
+    if (!g) return false;
+    return state.riskUsedByGroup[g] < RISK_LIMITS[g];
+  }
+
+  function remainingFor(topicId, points) {
+    return allQuestions().filter(q =>
+      q.topicId === topicId &&
+      q.points === points &&
+      !state.usedIds.has(q.id)
+    ).length;
   }
 
   function pickRandom(arr) {
@@ -38,135 +104,34 @@
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  // tint podle bodů (jen vizuál; 0..0.35)
-  function tintForPoints(points) {
-    const pts = window.DATA?.POINTS || [100,200,300,400,500];
-    const idx = Math.max(0, pts.indexOf(points));
-    const t = 0.12 + idx * 0.05;     // 100→0.12, 500→0.32
-    return clamp(t, 0.10, 0.35);
-  }
-
-  function allQuestions() {
-    return window.DATA?.QUESTIONS || [];
-  }
-
-  function allowedTopics() {
-    const topics = window.DATA?.TOPICS || [];
-    if (!state.allowedTopicIds || !state.allowedTopicIds.length) return topics;
-    const set = new Set(state.allowedTopicIds);
-    return topics.filter(t => set.has(t.id));
-  }
-
-  function remainingCount(topicId, points) {
-    const qs = allQuestions().filter(q =>
-      q.topicId === topicId &&
-      q.points === points &&
-      !state.usedIds.has(q.id)
-    );
-    return qs.length;
-  }
-
-  function anyRemainingInTopic(topicId) {
-    const qs = allQuestions().filter(q =>
-      q.topicId === topicId &&
-      !state.usedIds.has(q.id)
-    );
-    return qs.length;
-  }
-
-  // ------- API pro main.js -------
   function init({ teamName, teacherSettings } = {}) {
     state.teamName = (teamName || "Tým").trim() || "Tým";
-    state.usedIds = new Set();
-    state.current = null;
-    state.score = 0;
-
-    // teacher settings
     state.allowedTopicIds = teacherSettings?.allowedTopicIds || null;
 
-    // default active topic = první povolené
-    const topics = allowedTopics();
-    state.activeTopicId = topics[0]?.id || null;
+    state.usedIds = new Set();
+    state.current = null;
+
+    state.totalPicked = 0;
+    state.pickedByGroup = { A: 0, B: 0, C: 0 };
+    state.riskUsedByGroup = { A: 0, B: 0, C: 0 };
+
+    state.rawScore = 0;
   }
 
   function reset() {
-    // jednoduchý reset celé hry
     init({ teamName: state.teamName, teacherSettings: { allowedTopicIds: state.allowedTopicIds } });
-  }
-
-  function selectTopic(topicId) {
-    // ignoruj nepovolené
-    const allowed = new Set(allowedTopics().map(t => t.id));
-    if (!allowed.has(topicId)) return;
-    state.activeTopicId = topicId;
-  }
-
-  function getBoardView() {
-    const pts = window.DATA?.POINTS || [100,200,300,400,500];
-    const topics = allowedTopics();
-
-    // pokud aktivní téma už není povolené, přepni na první
-    if (!topics.find(t => t.id === state.activeTopicId)) {
-      state.activeTopicId = topics[0]?.id || null;
-    }
-
-    // topics view (vlevo)
-    const topicViews = topics.map(t => {
-      const rem = anyRemainingInTopic(t.id);
-      return {
-        id: t.id,
-        name: t.name,
-        color: t.color,
-        remainingText: `Zbývá: ${rem}`,
-        isDisabled: rem === 0,
-        isActive: t.id === state.activeTopicId,
-      };
-    });
-
-    // cards view (vpravo) – jen pro active topic
-    const active = state.activeTopicId;
-    const activeTopic = active ? topicById(active) : null;
-
-    const cards = (!activeTopic ? [] : pts.map(p => {
-      const rem = remainingCount(activeTopic.id, p);
-      const disabled = rem === 0;
-
-      return {
-        topicId: activeTopic.id,
-        points: p,
-        color: activeTopic.color,
-        tint: tintForPoints(p),
-        safeEnabled: !disabled,  // zatím stejné
-        riskEnabled: !disabled,  // později tu doplníme vaše “kolikrát jde kliknout”
-        isDisabled: disabled,
-      };
-    }));
-
-    const topicTotalRemaining = topics.reduce((sum, t) => sum + anyRemainingInTopic(t.id), 0);
-    const gridRemaining = activeTopic
-      ? pts.reduce((sum, p) => sum + remainingCount(activeTopic.id, p), 0)
-      : 0;
-
-    return {
-      activeTopicId: state.activeTopicId,
-      topics: topicViews,
-      cards,
-      meta: {
-        topicMeta: `Zbývá celkem: ${topicTotalRemaining}`,
-        gridTitle: "Otázky",
-        gridMeta: activeTopic
-          ? `Téma: ${activeTopic.name} • zbývá: ${gridRemaining}`
-          : "Vyber téma vlevo",
-        hint: "",
-      },
-    };
   }
 
   function pickQuestion({ topicId, points, mode } = {}) {
     const t = topicById(topicId);
     if (!t) return null;
 
-    // vyber nepoužitou otázku pro (topicId + points)
+    const g = groupForPoints(points);
+    if (!g) return null;
+
+    if (!canPick(points)) return null;
+    if (mode === "risk" && !canRisk(points)) return null;
+
     const pool = allQuestions().filter(q =>
       q.topicId === topicId &&
       q.points === points &&
@@ -176,15 +141,18 @@
     const q = pickRandom(pool);
     if (!q) return null;
 
-    // označ jako použitou hned při výběru (aby nešla otevřít znovu)
+    // rezervuj otázku + zapiš tah (kvóty)
     state.usedIds.add(q.id);
+    state.totalPicked += 1;
+    state.pickedByGroup[g] += 1;
+    if (mode === "risk") state.riskUsedByGroup[g] += 1;
 
     state.current = {
       id: q.id,
       topicId,
       topicName: t.name,
-      topicColor: t.color,
       points,
+      group: g,
       mode: mode === "risk" ? "risk" : "safe",
       q: q.q,
       a: q.a,
@@ -205,23 +173,75 @@
     const pts = state.current.points;
     const mode = state.current.mode;
 
-    // ⚠️ TADY SI POZDĚJI DOSADÍME VAŠE PŘESNÉ PRAVIDLO “bez risku/riskuj”
-    // pro teď:
-    // - safe: správně +pts, špatně +0
-    // - risk: správně +2*pts, špatně -pts
     if (mode === "safe") {
-      if (correct) state.score += pts;
+      if (correct) state.rawScore += pts;
     } else {
-      if (correct) state.score += 2 * pts;
-      else state.score -= pts;
+      if (correct) state.rawScore += (pts + bonusFor(pts));
+      else state.rawScore -= PENALTY_RISK_WRONG;
     }
 
     state.current = null;
   }
 
-  function getScoreView() {
+  function getResult() {
+    const raw = state.rawScore;
+    const scaled = (raw / RAW_MAX) * 20;
+    const stationPoints = Math.ceil(scaled);
+    const ratio = RAW_MAX > 0 ? (raw / RAW_MAX) : 0;
+
+    return { rawScore: raw, rawMax: RAW_MAX, scaled, stationPoints, ratio };
+  }
+
+  function getBoardView() {
+    const topics = allowedTopics();
+
+    const progressText = `Otázky: ${state.totalPicked}/10`;
+    const countersText =
+      `A: ${state.pickedByGroup.A}/${LIMITS.A} (risk ${state.riskUsedByGroup.A}/${RISK_LIMITS.A}) • ` +
+      `B: ${state.pickedByGroup.B}/${LIMITS.B} (risk ${state.riskUsedByGroup.B}/${RISK_LIMITS.B}) • ` +
+      `C: ${state.pickedByGroup.C}/${LIMITS.C} (risk ${state.riskUsedByGroup.C}/${RISK_LIMITS.C})`;
+
+    const groups = {};
+    Object.keys(GROUPS).forEach(key => {
+      const g = GROUPS[key];
+      groups[key] = {
+        key,
+        title: g.title,
+        points: g.points.slice(),
+        topics: topics.map(t => {
+          const cards = g.points.map(p => {
+            const rem = remainingFor(t.id, p);
+            const pickOk = canPick(p);
+            const riskOk = canRisk(p);
+
+            const disabled = (rem <= 0) || !pickOk;
+            return {
+              topicId: t.id,
+              topicName: t.name,
+              topicColor: t.color,
+              points: p,
+              remaining: rem,
+              safeEnabled: !disabled,
+              riskEnabled: !disabled && riskOk,
+              isDisabled: disabled,
+            };
+          });
+
+          return {
+            topicId: t.id,
+            topicName: t.name,
+            topicColor: t.color,
+            cards,
+          };
+        }),
+      };
+    });
+
     return {
-      lines: [`${state.teamName}: ${state.score} b`],
+      progressText,
+      countersText,
+      groups,
+      hint: isFinished() ? "Hotovo – zobrazte výsledek." : "",
     };
   }
 
@@ -229,15 +249,17 @@
     return window.DATA?.RULES || "";
   }
 
-  // expose
   window.Game = {
     init,
     reset,
-    selectTopic,
-    getBoardView,
+
     pickQuestion,
     resolveAnswer,
-    getScoreView,
+
+    getBoardView,
+    isFinished,
+    getResult,
+
     getRulesText,
   };
 })();
