@@ -125,98 +125,114 @@
     return 0.14;
   }
 
-  function renderBoardAll(view) {
-    if (!view || !el.boardColumns) return;
+ function renderBoardAll(view) {
+  if (!view || !el.boardColumns) return;
 
-    if (el.boardProgress) el.boardProgress.textContent = view.progressText || "Otázky: 0/10";
-    if (el.boardCounters) el.boardCounters.textContent = view.countersText || "";
-    if (el.boardHint) el.boardHint.textContent = view.hint || "";
+  if (el.boardProgress) el.boardProgress.textContent = view.progressText || "Otázky: 0/10";
+  if (el.boardCounters) el.boardCounters.textContent = view.countersText || "";
+  if (el.boardHint) el.boardHint.textContent = view.hint || "";
 
-    clear(el.boardColumns);
+  clear(el.boardColumns);
 
-    // pořadí sloupců A, B, C
-    const order = ["A", "B", "C"];
-    order.forEach(groupKey => {
-      const g = view.groups?.[groupKey];
-      if (!g) return;
+  const groups = view.groups;
+  if (!groups || !groups.A) return;
 
-      const col = document.createElement("div");
-      col.className = "group-col";
+  const topics = groups.A.topics; // všechny skupiny mají stejná témata
 
-      const title = document.createElement("h3");
-      title.className = "group-col__title";
-      title.textContent = g.title;
-      col.appendChild(title);
+  topics.forEach((topic, index) => {
+    const row = document.createElement("div");
+    row.className = "topic-row";
+    row.style.setProperty("--topic", topic.topicColor || "#3b82f6");
 
-      g.topics.forEach(t => {
-        const box = document.createElement("section");
-        box.className = "topic-box";
-        box.style.setProperty("--topic", t.topicColor || "#3b82f6");
+    /* === LEVÁ ČÁST: TÉMA === */
+    const head = document.createElement("div");
+    head.className = "topic-row__head";
 
-        const head = document.createElement("div");
-        head.className = "topic-box__head";
+    const name = document.createElement("div");
+    name.className = "topic-row__name";
+    name.textContent = topic.topicName;
 
-        const name = document.createElement("div");
-        name.className = "topic-box__name";
-        name.textContent = t.topicName;
+    const mini = document.createElement("div");
+    mini.className = "topic-row__mini";
 
-        const mini = document.createElement("div");
-        mini.className = "topic-box__mini";
-        mini.textContent = ""; // můžeš sem dát třeba "zbývá …"
+    const remaining =
+      groups.A.topics[index].cards.filter(c => !c.isDisabled).length +
+      groups.B.topics[index].cards.filter(c => !c.isDisabled).length +
+      groups.C.topics[index].cards.filter(c => !c.isDisabled).length;
 
-        head.appendChild(name);
-        head.appendChild(mini);
+    mini.textContent = `zbývá: ${remaining}`;
 
-        const cardsWrap = document.createElement("div");
-        cardsWrap.className = "topic-box__cards";
+    head.appendChild(name);
+    head.appendChild(mini);
 
-        t.cards.forEach(c => {
-          const art = document.createElement("article");
-          art.className = "qcard";
-          if (c.isDisabled) art.classList.add("is-disabled");
-          art.dataset.topicId = c.topicId;
-          art.dataset.points = String(c.points);
+    /* === PRAVÁ ČÁST: [A][B][C] === */
+    const boxes = document.createElement("div");
+    boxes.className = "topic-row__boxes";
 
-          art.style.setProperty("--topic", t.topicColor || "#3b82f6");
-          art.style.setProperty("--tint", String(tintForPoints(c.points)));
+    ["A", "B", "C"].forEach(groupKey => {
+      const group = groups[groupKey];
+      const topicGroup = group.topics[index];
 
-          const pts = document.createElement("div");
-          pts.className = "qcard__points";
-          pts.textContent = String(c.points);
+      const box = document.createElement("div");
+      box.className = "group-box";
+      box.dataset.group = groupKey;
 
-          const actions = document.createElement("div");
-          actions.className = "qcard__actions";
+      const title = document.createElement("div");
+      title.className = "group-box__title";
+      title.textContent = group.title;
 
-          const btnSafe = document.createElement("button");
-          btnSafe.type = "button";
-          btnSafe.className = "btn btn--small";
-          btnSafe.textContent = "Bez risku";
-          btnSafe.dataset.action = "safe";
-          btnSafe.disabled = !c.safeEnabled;
+      const cardsWrap = document.createElement("div");
+      cardsWrap.className = "group-box__cards";
 
-          const btnRisk = document.createElement("button");
-          btnRisk.type = "button";
-          btnRisk.className = "btn btn--small btn--primary";
-          btnRisk.textContent = "Riskuj";
-          btnRisk.dataset.action = "risk";
-          btnRisk.disabled = !c.riskEnabled;
+      topicGroup.cards.forEach(c => {
+        const art = document.createElement("article");
+        art.className = "qcard";
+        if (c.isDisabled) art.classList.add("is-disabled");
 
-          actions.appendChild(btnSafe);
-          actions.appendChild(btnRisk);
+        art.dataset.topicId = c.topicId;
+        art.dataset.points = c.points;
 
-          art.appendChild(pts);
-          art.appendChild(actions);
-          cardsWrap.appendChild(art);
-        });
+        art.style.setProperty("--topic", topic.topicColor || "#3b82f6");
+        art.style.setProperty("--tint", String(tintForPoints(c.points)));
 
-        box.appendChild(head);
-        box.appendChild(cardsWrap);
-        col.appendChild(box);
+        const pts = document.createElement("div");
+        pts.className = "qcard__points";
+        pts.textContent = c.points;
+
+        const actions = document.createElement("div");
+        actions.className = "qcard__actions";
+
+        const btnSafe = document.createElement("button");
+        btnSafe.className = "btn btn--small";
+        btnSafe.textContent = "Bez risku";
+        btnSafe.dataset.action = "safe";
+        btnSafe.disabled = !c.safeEnabled;
+
+        const btnRisk = document.createElement("button");
+        btnRisk.className = "btn btn--small btn--primary";
+        btnRisk.textContent = "Riskuj";
+        btnRisk.dataset.action = "risk";
+        btnRisk.disabled = !c.riskEnabled;
+
+        actions.appendChild(btnSafe);
+        actions.appendChild(btnRisk);
+
+        art.appendChild(pts);
+        art.appendChild(actions);
+        cardsWrap.appendChild(art);
       });
 
-      el.boardColumns.appendChild(col);
+      box.appendChild(title);
+      box.appendChild(cardsWrap);
+      boxes.appendChild(box);
     });
-  }
+
+    row.appendChild(head);
+    row.appendChild(boxes);
+    el.boardColumns.appendChild(row);
+  });
+}
+
 
   function refreshBoardFromGame() {
     if (!hasGame || typeof window.Game.getBoardView !== "function") return;
