@@ -125,7 +125,7 @@
     return 0.14;
   }
 
- function renderBoardAll(view) {
+function renderBoardAll(view) {
   if (!view || !el.boardColumns) return;
 
   if (el.boardProgress) el.boardProgress.textContent = view.progressText || "Otázky: 0/10";
@@ -135,80 +135,86 @@
   clear(el.boardColumns);
 
   const groups = view.groups;
-  if (!groups || !groups.A) return;
+  if (!groups?.A?.topics?.length) return;
 
-  const topics = groups.A.topics; // všechny skupiny mají stejná témata
+  const topicCount = groups.A.topics.length;
 
-  topics.forEach((topic, index) => {
+  for (let i = 0; i < topicCount; i++) {
+    const tA = groups.A.topics[i];
+    const tB = groups.B.topics[i];
+    const tC = groups.C.topics[i];
+
     const row = document.createElement("div");
     row.className = "topic-row";
-    row.style.setProperty("--topic", topic.topicColor || "#3b82f6");
+    row.style.setProperty("--topic", tA.topicColor || "#3b82f6");
 
-    /* === LEVÁ ČÁST: TÉMA === */
-    const head = document.createElement("div");
-    head.className = "topic-row__head";
+    // === levá karta tématu ===
+    const topicCard = document.createElement("div");
+    topicCard.className = "topic-row__topic";
+    topicCard.style.setProperty("--topic", tA.topicColor || "#3b82f6");
 
-    const name = document.createElement("div");
-    name.className = "topic-row__name";
-    name.textContent = topic.topicName;
+    const nm = document.createElement("div");
+    nm.className = "topic-row__topicName";
+    nm.textContent = tA.topicName;
 
     const mini = document.createElement("div");
-    mini.className = "topic-row__mini";
-
+    mini.className = "topic-row__topicMini";
     const remaining =
-      groups.A.topics[index].cards.filter(c => !c.isDisabled).length +
-      groups.B.topics[index].cards.filter(c => !c.isDisabled).length +
-      groups.C.topics[index].cards.filter(c => !c.isDisabled).length;
-
+      tA.cards.filter(c => !c.isDisabled).length +
+      tB.cards.filter(c => !c.isDisabled).length +
+      tC.cards.filter(c => !c.isDisabled).length;
     mini.textContent = `zbývá: ${remaining}`;
 
-    head.appendChild(name);
-    head.appendChild(mini);
+    topicCard.appendChild(nm);
+    topicCard.appendChild(mini);
 
-    /* === PRAVÁ ČÁST: [A][B][C] === */
-    const boxes = document.createElement("div");
-    boxes.className = "topic-row__boxes";
+    // === pravé 3 boxy A/B/C ===
+    const groupsWrap = document.createElement("div");
+    groupsWrap.className = "topic-row__groups";
 
-    ["A", "B", "C"].forEach(groupKey => {
-      const group = groups[groupKey];
-      const topicGroup = group.topics[index];
+    ["A", "B", "C"].forEach(key => {
+      const group = groups[key];
+      const topic = group.topics[i];
 
       const box = document.createElement("div");
       box.className = "group-box";
-      box.dataset.group = groupKey;
+      box.dataset.group = key;
 
       const title = document.createElement("div");
       title.className = "group-box__title";
-      title.textContent = group.title;
+      // chceme čistě: [100 200] | [300 400] | [500]
+      title.textContent = key === "A" ? "A (100–200)" : key === "B" ? "B (300–400)" : "C (500)";
 
       const cardsWrap = document.createElement("div");
       cardsWrap.className = "group-box__cards";
 
-      topicGroup.cards.forEach(c => {
+      topic.cards.forEach(c => {
         const art = document.createElement("article");
         art.className = "qcard";
         if (c.isDisabled) art.classList.add("is-disabled");
 
         art.dataset.topicId = c.topicId;
-        art.dataset.points = c.points;
+        art.dataset.points = String(c.points);
 
-        art.style.setProperty("--topic", topic.topicColor || "#3b82f6");
+        art.style.setProperty("--topic", tA.topicColor || "#3b82f6");
         art.style.setProperty("--tint", String(tintForPoints(c.points)));
 
         const pts = document.createElement("div");
         pts.className = "qcard__points";
-        pts.textContent = c.points;
+        pts.textContent = String(c.points);
 
         const actions = document.createElement("div");
         actions.className = "qcard__actions";
 
         const btnSafe = document.createElement("button");
+        btnSafe.type = "button";
         btnSafe.className = "btn btn--small";
         btnSafe.textContent = "Bez risku";
         btnSafe.dataset.action = "safe";
         btnSafe.disabled = !c.safeEnabled;
 
         const btnRisk = document.createElement("button");
+        btnRisk.type = "button";
         btnRisk.className = "btn btn--small btn--primary";
         btnRisk.textContent = "Riskuj";
         btnRisk.dataset.action = "risk";
@@ -219,19 +225,22 @@
 
         art.appendChild(pts);
         art.appendChild(actions);
+
         cardsWrap.appendChild(art);
       });
 
       box.appendChild(title);
       box.appendChild(cardsWrap);
-      boxes.appendChild(box);
+
+      groupsWrap.appendChild(box);
     });
 
-    row.appendChild(head);
-    row.appendChild(boxes);
+    row.appendChild(topicCard);
+    row.appendChild(groupsWrap);
     el.boardColumns.appendChild(row);
-  });
+  }
 }
+
 
 
   function refreshBoardFromGame() {
