@@ -1,23 +1,16 @@
 /* main.js
-   Pí”di kvíz – starter controller (bez frameworků)
    - přepínání obrazovek
-   - modaly (rules + teacher)
-   - skeleton eventů pro hru
+   - modaly (rules + teacher + result)
+   - board: 3 sloupce A/B/C, všechna témata najednou
 */
 
 (() => {
   "use strict";
 
-  // ---------- DOM helpers ----------
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
 
-  function on(el, ev, fn) {
-    if (!el) return;
-    el.addEventListener(ev, fn);
-  }
-
-  // ---------- Screens ----------
   const screens = {
     start: $("#screenStart"),
     board: $("#screenBoard"),
@@ -26,33 +19,26 @@
 
   function showScreen(name) {
     Object.values(screens).forEach(s => s && s.classList.remove("is-active"));
-    if (!screens[name]) {
-      console.warn("Unknown screen:", name);
-      return;
-    }
-    screens[name].classList.add("is-active");
+    screens[name]?.classList.add("is-active");
   }
 
-  // ---------- Modals ----------
+  // Modals
   const rulesModal = $("#rulesModal");
   const teacherModal = $("#teacherModal");
+  const resultModal = $("#resultModal");
 
   function openModal(modalEl) {
     if (!modalEl) return;
     modalEl.classList.remove("is-hidden");
-    // jednoduchý "focus trap" zatím neděláme, jen UX minimum:
     document.body.style.overflow = "hidden";
   }
-
   function closeModal(modalEl) {
     if (!modalEl) return;
     modalEl.classList.add("is-hidden");
     document.body.style.overflow = "";
   }
-
   function wireModalClose(modalEl) {
     if (!modalEl) return;
-    // klik na backdrop (data-close-modal)
     on(modalEl, "click", (e) => {
       const closeHit = e.target && (e.target.hasAttribute("data-close-modal") || e.target.closest("[data-close-modal]"));
       if (closeHit) closeModal(modalEl);
@@ -61,22 +47,17 @@
 
   wireModalClose(rulesModal);
   wireModalClose(teacherModal);
+  wireModalClose(resultModal);
 
-  // ESC zavírá modaly
   on(document, "keydown", (e) => {
     if (e.key !== "Escape") return;
     if (rulesModal && !rulesModal.classList.contains("is-hidden")) closeModal(rulesModal);
     if (teacherModal && !teacherModal.classList.contains("is-hidden")) closeModal(teacherModal);
+    if (resultModal && !resultModal.classList.contains("is-hidden")) closeModal(resultModal);
   });
 
-  // ---------- State (starter) ----------
-  const AppState = {
-    teamName: "",
-    activeTopicId: null, // zvolené téma v levém sloupci
-    lastSelection: null, // např. { topicId, points, mode: "safe"|"risk" }
-  };
+  const AppState = { teamName: "" };
 
-  // ---------- Elements ----------
   const el = {
     // start
     teamName: $("#teamName"),
@@ -86,233 +67,180 @@
 
     // board
     btnBackToStart: $("#btnBackToStart"),
-    topicsList: $("#topicsList"),
-    questionGrid: $("#questionGrid"),
-    topicMeta: $("#topicMeta"),
-    gridMeta: $("#gridMeta"),
-    gridTitle: $("#gridTitle"),
+    boardColumns: $("#boardColumns"),
+    boardProgress: $("#boardProgress"),
+    boardCounters: $("#boardCounters"),
     boardHint: $("#boardHint"),
 
-    // question view
+    // question
     btnCloseQuestion: $("#btnCloseQuestion"),
     qStatus: $("#qStatus"),
-    qTitle: $("#qTitle"),
     qText: $("#qText"),
     btnReveal: $("#btnReveal"),
     qAnswerBox: $("#qAnswerBox"),
     qAnswer: $("#qAnswer"),
     btnMarkCorrect: $("#btnMarkCorrect"),
     btnMarkWrong: $("#btnMarkWrong"),
-    scoreBoard: $("#scoreBoard"),
 
-    // modals
+    // rules
     btnCloseRules: $("#btnCloseRules"),
     rulesText: $("#rulesText"),
 
+    // teacher
     btnOpenTeacher: $("#btnOpenTeacher"),
     btnCloseTeacher: $("#btnCloseTeacher"),
     btnTeacherReset: $("#btnTeacherReset"),
     btnTeacherSave: $("#btnTeacherSave"),
     teacherTopicsList: $("#teacherTopicsList"),
     teacherHint: $("#teacherHint"),
+
+    // result
+    btnCloseResult: $("#btnCloseResult"),
+    resultBody: $("#resultBody"),
+    btnNewGame: $("#btnNewGame"),
+    btnBackHome: $("#btnBackHome"),
   };
 
-  // ---------- External modules (placeholders) ----------
-  // (v dalších krocích dodáme konkrétní implementace)
   const hasGame = typeof window.Game !== "undefined";
   const hasTeacher = typeof window.Teacher !== "undefined";
 
-  // ---------- UI render skeleton ----------
-  function renderStart() {
-    if (el.teamName) el.teamName.value = AppState.teamName || "";
-    if (el.startHint) el.startHint.textContent = "";
-  }
-
-  function renderBoard() {
-    // Témata + grid budou renderovat data z Game/Teacher (zatím placeholder)
-    // - renderTopics()
-    // - renderGrid()
-    if (el.boardHint) el.boardHint.textContent = "";
-  }
-
   function renderQuestionView(payload) {
-    // payload: { topicName, points, mode, questionText, answerText }
     if (!payload) return;
-
-    if (el.qStatus) {
-      const modeLabel = payload.mode === "risk" ? "Riskuj" : "Bez risku";
-      el.qStatus.textContent = `${payload.topicName} • ${payload.points} b • ${modeLabel}`;
-    }
-    if (el.qTitle) el.qTitle.textContent = "Otázka";
+    const modeLabel = payload.mode === "risk" ? "Riskuj" : "Bez risku";
+    if (el.qStatus) el.qStatus.textContent = `${payload.topicName} • ${payload.points} b • ${modeLabel}`;
     if (el.qText) el.qText.textContent = payload.questionText || "";
-
     if (el.qAnswerBox) el.qAnswerBox.classList.add("is-hidden");
     if (el.qAnswer) el.qAnswer.textContent = payload.answerText || "";
   }
 
-  // ---------- Topics / grid rendering (skeleton) ----------
-  function clear(node) {
-    if (!node) return;
-    node.innerHTML = "";
+  function clear(node) { if (node) node.innerHTML = ""; }
+
+  function tintForPoints(points) {
+    // jen vizuál (A/B/C působí hezky i bez dalších barev)
+    if (points === 100) return 0.12;
+    if (points === 200) return 0.16;
+    if (points === 300) return 0.20;
+    if (points === 400) return 0.24;
+    if (points === 500) return 0.30;
+    return 0.14;
   }
 
-  function renderTopics(topics) {
-    // topics: [{id, name, color, remainingText, isDisabled, isActive}]
-    clear(el.topicsList);
-    if (!el.topicsList) return;
+  function renderBoardAll(view) {
+    if (!view || !el.boardColumns) return;
 
-    topics.forEach(t => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "topic-card";
-      if (t.isActive) btn.classList.add("is-active");
-      if (t.isDisabled) btn.classList.add("is-disabled");
-      if (t.color) btn.style.setProperty("--topic", t.color);
+    if (el.boardProgress) el.boardProgress.textContent = view.progressText || "Otázky: 0/10";
+    if (el.boardCounters) el.boardCounters.textContent = view.countersText || "";
+    if (el.boardHint) el.boardHint.textContent = view.hint || "";
 
-      btn.dataset.topicId = t.id;
+    clear(el.boardColumns);
 
-      const name = document.createElement("span");
-      name.className = "topic-card__name";
-      name.textContent = t.name;
+    // pořadí sloupců A, B, C
+    const order = ["A", "B", "C"];
+    order.forEach(groupKey => {
+      const g = view.groups?.[groupKey];
+      if (!g) return;
 
-      const state = document.createElement("span");
-      state.className = "topic-card__state";
-      state.textContent = t.remainingText || "";
+      const col = document.createElement("div");
+      col.className = "group-col";
 
-      btn.appendChild(name);
-      btn.appendChild(state);
-      el.topicsList.appendChild(btn);
-    });
-  }
+      const title = document.createElement("h3");
+      title.className = "group-col__title";
+      title.textContent = g.title;
+      col.appendChild(title);
 
-  function renderGrid(cards) {
-    // cards: [{topicId, points, tint, color, safeEnabled, riskEnabled, isDisabled}]
-    clear(el.questionGrid);
-    if (!el.questionGrid) return;
+      g.topics.forEach(t => {
+        const box = document.createElement("section");
+        box.className = "topic-box";
+        box.style.setProperty("--topic", t.topicColor || "#3b82f6");
 
-    cards.forEach(c => {
-      const art = document.createElement("article");
-      art.className = "qcard";
-      if (c.isDisabled) art.classList.add("is-disabled");
-      art.dataset.topicId = c.topicId;
-      art.dataset.points = String(c.points);
+        const head = document.createElement("div");
+        head.className = "topic-box__head";
 
-      if (c.color) art.style.setProperty("--topic", c.color);
-      if (typeof c.tint === "number") art.style.setProperty("--tint", String(c.tint));
+        const name = document.createElement("div");
+        name.className = "topic-box__name";
+        name.textContent = t.topicName;
 
-      const pts = document.createElement("div");
-      pts.className = "qcard__points";
-      pts.textContent = String(c.points);
+        const mini = document.createElement("div");
+        mini.className = "topic-box__mini";
+        mini.textContent = ""; // můžeš sem dát třeba "zbývá …"
 
-      const actions = document.createElement("div");
-      actions.className = "qcard__actions";
+        head.appendChild(name);
+        head.appendChild(mini);
 
-      const btnSafe = document.createElement("button");
-      btnSafe.type = "button";
-      btnSafe.className = "btn btn--small";
-      btnSafe.textContent = "Bez risku";
-      btnSafe.dataset.action = "safe";
-      if (!c.safeEnabled) btnSafe.disabled = true;
+        const cardsWrap = document.createElement("div");
+        cardsWrap.className = "topic-box__cards";
 
-      const btnRisk = document.createElement("button");
-      btnRisk.type = "button";
-      btnRisk.className = "btn btn--small btn--primary";
-      btnRisk.textContent = "Riskuj";
-      btnRisk.dataset.action = "risk";
-      if (!c.riskEnabled) btnRisk.disabled = true;
+        t.cards.forEach(c => {
+          const art = document.createElement("article");
+          art.className = "qcard";
+          if (c.isDisabled) art.classList.add("is-disabled");
+          art.dataset.topicId = c.topicId;
+          art.dataset.points = String(c.points);
 
-      actions.appendChild(btnSafe);
-      actions.appendChild(btnRisk);
+          art.style.setProperty("--topic", t.topicColor || "#3b82f6");
+          art.style.setProperty("--tint", String(tintForPoints(c.points)));
 
-      art.appendChild(pts);
-      art.appendChild(actions);
+          const pts = document.createElement("div");
+          pts.className = "qcard__points";
+          pts.textContent = String(c.points);
 
-      el.questionGrid.appendChild(art);
-    });
-  }
+          const actions = document.createElement("div");
+          actions.className = "qcard__actions";
 
-  // ---------- Event handlers ----------
-  function handleStartGame() {
-    AppState.teamName = (el.teamName?.value || "").trim();
-    if (!AppState.teamName) AppState.teamName = "Tým";
+          const btnSafe = document.createElement("button");
+          btnSafe.type = "button";
+          btnSafe.className = "btn btn--small";
+          btnSafe.textContent = "Bez risku";
+          btnSafe.dataset.action = "safe";
+          btnSafe.disabled = !c.safeEnabled;
 
-    // Init game
-    if (hasGame && typeof window.Game.init === "function") {
-      // Teacher settings (povolená témata apod.)
-      const teacherSettings = (hasTeacher && typeof window.Teacher.getSettings === "function")
-        ? window.Teacher.getSettings()
-        : null;
+          const btnRisk = document.createElement("button");
+          btnRisk.type = "button";
+          btnRisk.className = "btn btn--small btn--primary";
+          btnRisk.textContent = "Riskuj";
+          btnRisk.dataset.action = "risk";
+          btnRisk.disabled = !c.riskEnabled;
 
-      window.Game.init({
-        teamName: AppState.teamName,
-        teacherSettings,
+          actions.appendChild(btnSafe);
+          actions.appendChild(btnRisk);
+
+          art.appendChild(pts);
+          art.appendChild(actions);
+          cardsWrap.appendChild(art);
+        });
+
+        box.appendChild(head);
+        box.appendChild(cardsWrap);
+        col.appendChild(box);
       });
-    }
 
-    // Render board with data from Game (zatím placeholder)
+      el.boardColumns.appendChild(col);
+    });
+  }
+
+  function refreshBoardFromGame() {
+    if (!hasGame || typeof window.Game.getBoardView !== "function") return;
+    const view = window.Game.getBoardView();
+    renderBoardAll(view);
+  }
+
+  function handleStartGame() {
+    AppState.teamName = (el.teamName?.value || "").trim() || "Tým";
+
+    const teacherSettings = (hasTeacher && typeof window.Teacher.getSettings === "function")
+      ? window.Teacher.getSettings()
+      : null;
+
+    window.Game?.init?.({ teamName: AppState.teamName, teacherSettings });
     refreshBoardFromGame();
     showScreen("board");
   }
 
-  function refreshBoardFromGame() {
-    // Tady bude jediný bod “překresli herní plochu”
-    // 1) topics
-    // 2) grid
-    // 3) meta texty
-    if (hasGame && typeof window.Game.getBoardView === "function") {
-      const view = window.Game.getBoardView();
-      // očekávání (můžeme upravit): { topics, cards, activeTopicId, meta }
-      if (view?.topics) renderTopics(view.topics);
-      if (view?.cards) renderGrid(view.cards);
+  function handleCardAction(topicId, points, mode) {
+    const q = window.Game?.pickQuestion?.({ topicId, points, mode });
+    if (!q) return;
 
-      if (view?.meta?.topicMeta && el.topicMeta) el.topicMeta.textContent = view.meta.topicMeta;
-      if (view?.meta?.gridMeta && el.gridMeta) el.gridMeta.textContent = view.meta.gridMeta;
-      if (view?.meta?.gridTitle && el.gridTitle) el.gridTitle.textContent = view.meta.gridTitle;
-      if (el.boardHint) el.boardHint.textContent = view?.meta?.hint || "";
-      AppState.activeTopicId = view?.activeTopicId ?? AppState.activeTopicId;
-      return;
-    }
-
-    // fallback, když Game ještě není: zobrazíme demo prázdno
-    if (el.topicMeta) el.topicMeta.textContent = "";
-    if (el.gridMeta) el.gridMeta.textContent = "Vyber téma vlevo";
-    if (el.gridTitle) el.gridTitle.textContent = "Otázky";
-    if (el.boardHint) el.boardHint.textContent = "";
-    renderTopics([]);
-    renderGrid([]);
-  }
-
-  function handleTopicClick(topicId) {
-    AppState.activeTopicId = topicId;
-
-    if (hasGame && typeof window.Game.selectTopic === "function") {
-      window.Game.selectTopic(topicId);
-    }
-    refreshBoardFromGame();
-  }
-
-  function handleGridAction(topicId, points, mode) {
-    // mode: "safe" | "risk"
-    AppState.lastSelection = { topicId, points, mode };
-
-    if (hasGame && typeof window.Game.pickQuestion === "function") {
-      const q = window.Game.pickQuestion({ topicId, points, mode });
-      // q: { topicName, points, mode, questionText, answerText }
-      if (q) {
-        renderQuestionView(q);
-        showScreen("question");
-      }
-      return;
-    }
-
-    // fallback: bez Game modulu
-    renderQuestionView({
-      topicName: "Téma",
-      points,
-      mode,
-      questionText: "Tady bude otázka… (game.js ještě není hotové)",
-      answerText: "Tady bude odpověď…",
-    });
+    renderQuestionView(q);
     showScreen("question");
   }
 
@@ -320,129 +248,102 @@
     el.qAnswerBox?.classList.remove("is-hidden");
   }
 
+  function showResultModal() {
+    const r = window.Game?.getResult?.();
+    if (!r) return;
+
+    const percent = Math.round((r.ratio * 100) * 10) / 10;
+
+    el.resultBody.innerHTML = `
+      <p><b>RAW skóre:</b> ${r.rawScore} / ${r.rawMax}</p>
+      <p><b>Přepočet:</b> (${r.rawScore} / ${r.rawMax}) × 20 = ${r.scaled.toFixed(2)}</p>
+      <p><b>Zaokrouhleno nahoru:</b> <span style="font-size:18px;font-weight:900;">${r.stationPoints} bodů</span></p>
+      <p class="muted">Úspěšnost: ${percent}%</p>
+    `;
+
+    openModal(resultModal);
+  }
+
   function handleMarkAnswer(isCorrect) {
-    // předání výsledku do Game (bodování, vyčerpání, disable)
-    if (hasGame && typeof window.Game.resolveAnswer === "function") {
-      window.Game.resolveAnswer({ correct: isCorrect });
+    window.Game?.resolveAnswer?.({ correct: isCorrect });
+
+    if (window.Game?.isFinished?.()) {
+      refreshBoardFromGame();
+      showResultModal();
+      return;
     }
 
-    // update scoreboard + návrat na plochu
-    if (hasGame && typeof window.Game.getScoreView === "function") {
-      renderScore(window.Game.getScoreView());
-    }
     refreshBoardFromGame();
     showScreen("board");
   }
 
-  function renderScore(scoreView) {
-    // scoreView: { lines: ["Tým: 120 b", ...] } nebo rovnou array stringů
-    if (!el.scoreBoard) return;
-    el.scoreBoard.innerHTML = "";
-
-    const lines = Array.isArray(scoreView) ? scoreView : (scoreView?.lines || []);
-    if (!lines.length) {
-      const d = document.createElement("div");
-      d.className = "muted";
-      d.textContent = "Zatím žádné skóre.";
-      el.scoreBoard.appendChild(d);
-      return;
-    }
-
-    lines.forEach(txt => {
-      const row = document.createElement("div");
-      row.className = "panel";
-      row.style.padding = "10px 12px";
-      row.textContent = txt;
-      el.scoreBoard.appendChild(row);
-    });
-  }
-
-  // ---------- Wiring ----------
   function wireEvents() {
-    // Start screen
+    // start
     on(el.btnStartGame, "click", handleStartGame);
     on(el.btnShowRules, "click", () => openModal(rulesModal));
     on(el.btnCloseRules, "click", () => closeModal(rulesModal));
 
-    // Board
+    // board
     on(el.btnBackToStart, "click", () => {
-      // zatím "ukončit" = zpět na start (reset hry se řeší v Game)
-      if (hasGame && typeof window.Game.reset === "function") window.Game.reset();
+      window.Game?.reset?.();
       showScreen("start");
-      renderStart();
     });
 
-    // Delegace kliků: topics list
-    on(el.topicsList, "click", (e) => {
-      const btn = e.target?.closest?.(".topic-card");
+    // delegace kliků na kartách (vše v boardColumns)
+    on(el.boardColumns, "click", (e) => {
+      const btn = e.target?.closest?.("button[data-action]");
       if (!btn) return;
-      if (btn.classList.contains("is-disabled")) return;
 
-      const topicId = btn.dataset.topicId;
-      if (topicId) handleTopicClick(topicId);
-    });
-
-    // Delegace kliků: question grid (Bez risku / Riskuj)
-    on(el.questionGrid, "click", (e) => {
-      const actionBtn = e.target?.closest?.("button[data-action]");
-      if (!actionBtn) return;
-
-      const card = actionBtn.closest(".qcard");
+      const card = btn.closest(".qcard");
       if (!card || card.classList.contains("is-disabled")) return;
 
-      const mode = actionBtn.dataset.action; // "safe" | "risk"
+      const mode = btn.dataset.action; // safe | risk
       const topicId = card.dataset.topicId;
       const points = Number(card.dataset.points || "0");
+      if (!topicId || !points) return;
 
-      if (!topicId || !points || (mode !== "safe" && mode !== "risk")) return;
-
-      handleGridAction(topicId, points, mode);
+      handleCardAction(topicId, points, mode);
     });
 
-    // Question screen
-    on(el.btnCloseQuestion, "click", () => {
-      // návrat bez vyhodnocení (pokud chcete zakázat, vyřešíme později)
-      showScreen("board");
-    });
+    // question
+    on(el.btnCloseQuestion, "click", () => showScreen("board"));
     on(el.btnReveal, "click", handleRevealAnswer);
     on(el.btnMarkCorrect, "click", () => handleMarkAnswer(true));
     on(el.btnMarkWrong, "click", () => handleMarkAnswer(false));
 
-    // Teacher modal
+    // teacher
     on(el.btnOpenTeacher, "click", () => {
-      // před otevřením načti aktuální nastavení
-      if (hasTeacher && typeof window.Teacher.render === "function") {
-        window.Teacher.render({
-          container: el.teacherTopicsList,
-          hintEl: el.teacherHint,
-        });
-      }
+      window.Teacher?.render?.({ container: el.teacherTopicsList, hintEl: el.teacherHint });
       openModal(teacherModal);
     });
-
     on(el.btnCloseTeacher, "click", () => closeModal(teacherModal));
     on(el.btnTeacherReset, "click", () => {
-      if (hasTeacher && typeof window.Teacher.reset === "function") {
-        window.Teacher.reset();
-        window.Teacher.render({ container: el.teacherTopicsList, hintEl: el.teacherHint });
-      }
+      window.Teacher?.reset?.();
+      window.Teacher?.render?.({ container: el.teacherTopicsList, hintEl: el.teacherHint });
     });
     on(el.btnTeacherSave, "click", () => {
-      if (hasTeacher && typeof window.Teacher.saveFromUI === "function") {
-        window.Teacher.saveFromUI();
-        window.Teacher.render({ container: el.teacherTopicsList, hintEl: el.teacherHint });
-      }
+      window.Teacher?.saveFromUI?.();
+      window.Teacher?.render?.({ container: el.teacherTopicsList, hintEl: el.teacherHint });
+    });
+
+    // result modal
+    on(el.btnCloseResult, "click", () => closeModal(resultModal));
+    on(el.btnNewGame, "click", () => {
+      closeModal(resultModal);
+      window.Game?.reset?.();
+      refreshBoardFromGame();
+      showScreen("board");
+    });
+    on(el.btnBackHome, "click", () => {
+      closeModal(resultModal);
+      window.Game?.reset?.();
+      showScreen("start");
     });
   }
 
-  // ---------- Init ----------
   function init() {
     wireEvents();
-    renderStart();
     showScreen("start");
-
-    // kdybychom chtěli hned načíst pravidla z Game/Data:
-    // if (hasGame && typeof window.Game.getRulesText === "function") { ... }
   }
 
   document.addEventListener("DOMContentLoaded", init);
