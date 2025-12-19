@@ -1,6 +1,6 @@
 /* =========================
-   RISKuj – starter styles
-   Minimal dark mode + screens
+   Pí”di kvíz – starter styles
+   Dark mode + board layout
    ========================= */
 
 :root{
@@ -15,16 +15,16 @@
   --primary: #3b82f6;
   --primary2: #2563eb;
 
-  --danger: #ef4444;
-
   --shadow: 0 10px 30px rgba(0,0,0,0.35);
 
   --radius: 16px;
   --radius2: 12px;
 
   --gap: 16px;
+  --tap: 44px;
 
-  --tap: 44px; /* minimální touch target */
+  /* fallback barva tématu, když JS nic nenastaví */
+  --topic: #3b82f6;
 }
 
 *{ box-sizing: border-box; }
@@ -57,7 +57,7 @@ body{
   backdrop-filter: blur(10px);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
 }
 
 .app-title{
@@ -92,7 +92,7 @@ body{
 }
 
 /* =========================
-   Main layout
+   Main / cards / panels
    ========================= */
 
 .app-main{
@@ -117,24 +117,34 @@ body{
   padding: 12px;
 }
 
-.split{
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: var(--gap);
+.panel--sticky{
+  position: sticky;
+  top: 72px; /* pod headerem */
 }
 
-.game-bottom{
-  margin-top: var(--gap);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--gap);
+.panel__head{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-@media (max-width: 860px){
-  .split,
-  .game-bottom{
-    grid-template-columns: 1fr;
-  }
+.panel__title{
+  margin: 0;
+  font-size: 18px;
+}
+
+.panel__meta{
+  font-size: 13px;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.panel__actions{
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* =========================
@@ -148,11 +158,12 @@ h1, h2, h3{
 
 h1{ font-size: 28px; }
 h2{ font-size: 22px; }
-h3{ font-size: 16px; color: var(--muted); font-weight: 700; }
+h3{ font-size: 14px; color: var(--muted); font-weight: 750; }
 
 p{ margin: 0 0 10px 0; }
 
 .muted{ color: var(--muted); }
+
 .hint{
   margin-top: 10px;
   color: var(--muted);
@@ -214,16 +225,11 @@ select:focus, input:focus{
   color: var(--text);
   cursor: pointer;
   user-select: none;
-  transition: transform 0.05s ease, background 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.05s ease, background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
 
-.btn:hover{
-  background: rgba(255,255,255,0.07);
-}
-
-.btn:active{
-  transform: translateY(1px);
-}
+.btn:hover{ background: rgba(255,255,255,0.07); }
+.btn:active{ transform: translateY(1px); }
 
 .btn--primary{
   border-color: rgba(59,130,246,0.55);
@@ -235,19 +241,39 @@ select:focus, input:focus{
   background: linear-gradient(180deg, rgba(59,130,246,0.42), rgba(37,99,235,0.26));
 }
 
-.btn--ghost{
-  background: transparent;
+.btn--ghost{ background: transparent; }
+
+.btn--small{
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 11px;
 }
 
+/* disabled */
 .btn:disabled,
-.btn.is-disabled{
-  opacity: 0.45;
-  cursor: not-allowed;
-  transform: none;
+.btn.is-disabled,
+.is-disabled{
+  opacity: 0.42;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+.is-disabled{
+  pointer-events: none;
+  filter: grayscale(0.2);
 }
 
 /* =========================
-   Lists / badges
+   Screens
+   ========================= */
+
+.screen{ display: none; }
+.screen.is-active{ display: block; }
+
+.is-hidden{ display: none !important; }
+
+/* =========================
+   Badges / list
    ========================= */
 
 .list{
@@ -267,16 +293,189 @@ select:focus, input:focus{
   color: var(--muted);
 }
 
-.game-topbar{
+/* =========================
+   Board layout
+   ========================= */
+
+.board{
+  width: min(1180px, 100%);
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--gap);
+  align-items: start;
+}
+
+.topics{ min-width: 0; }
+.grid{ min-width: 0; }
+
+@media (max-width: 980px){
+  .board{
+    grid-template-columns: 1fr;
+  }
+  .panel--sticky{
+    position: static;
+    top: auto;
+  }
+}
+
+/* =========================
+   Topic cards (left)
+   ========================= */
+
+.topics__list{
+  display: grid;
+  gap: 10px;
+}
+
+.topic-card{
+  --topic: var(--topic); /* může přepsat JS: style="--topic:#..." */
+  width: 100%;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  padding: 12px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  cursor: pointer;
+  color: var(--text);
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.06s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.topic-card::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.12);
+  pointer-events: none;
+}
+
+.topic-card::after{
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 8px;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--topic) 65%, transparent),
+    color-mix(in srgb, var(--topic) 35%, transparent)
+  );
+}
+
+.topic-card:hover{
+  border-color: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
+}
+
+.topic-card.is-active{
+  border-color: color-mix(in srgb, var(--topic) 55%, rgba(255,255,255,0.25));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--topic) 18%, transparent);
+  background:
+    radial-gradient(900px 220px at 0% 0%,
+      color-mix(in srgb, var(--topic) 20%, transparent),
+      transparent 55%
+    ),
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+}
+
+.topic-card__name{
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  display: block;
+}
+
+.topic-card__state{
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* =========================
+   Question grid (right)
+   ========================= */
+
+.question-grid{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1080px){
+  .question-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 860px){
+  .question-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px){
+  .question-grid{ grid-template-columns: 1fr; }
+}
+
+/* Question card:
+   - JS typicky nastaví --topic (barva tématu) + --tint (0..0.35 podle bodů)
+*/
+.qcard{
+  --topic: var(--topic);
+  --tint: 0.14;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.10);
+  padding: 12px;
+  background:
+    radial-gradient(600px 180px at 0% 0%,
+      color-mix(in srgb, var(--topic) calc(var(--tint) * 100%), transparent),
+      transparent 60%
+    ),
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  position: relative;
+  overflow: hidden;
+  min-height: 118px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 10px;
+}
+
+.qcard::after{
+  content:"";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+}
+
+.qcard__points{
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--topic) 70%, var(--text));
+}
+
+.qcard__actions{
+  display: grid;
+  gap: 8px;
+}
+
+.qcard.is-disabled{
+  opacity: 0.40;
+  filter: grayscale(0.35);
+  pointer-events: none;
+}
+
+.qcard.is-disabled .qcard__points{
+  color: var(--muted);
+}
+
+/* =========================
+   Question view screen
+   ========================= */
+
+.qtopbar{
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 14px;
-}
-
-.question-area{
-  padding: 10px 0;
 }
 
 .question-text{
@@ -294,23 +493,6 @@ select:focus, input:focus{
   border-radius: var(--radius2);
   border: 1px solid rgba(59,130,246,0.35);
   background: rgba(59,130,246,0.06);
-}
-
-/* =========================
-   Screen switch (important)
-   ========================= */
-
-.screen{
-  display: none;
-}
-
-.screen.is-active{
-  display: block;
-}
-
-/* helper */
-.is-hidden{
-  display: none !important;
 }
 
 /* =========================
@@ -353,6 +535,11 @@ select:focus, input:focus{
 
 .modal__body{
   padding: 14px;
+}
+
+.rules p{
+  margin: 0 0 10px 0;
+  color: var(--text);
 }
 
 /* =========================
