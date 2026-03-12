@@ -31,17 +31,14 @@
   const state = {
     teamName: "Tým",
     allowedTopicIds: null,
-
     usedIds: new Set(),
     current: null,
-
-    // progress / quotas
     totalPicked: 0,
     pickedByGroup: { A: 0, B: 0, C: 0 },
     riskUsedByGroup: { A: 0, B: 0, C: 0 },
-
-    // scoring
     rawScore: 0,
+    startedAt: null,
+    finishedAt: null,
   };
 
   function allQuestions() {
@@ -71,7 +68,7 @@
   }
 
   function bonusFor(points) {
-    return points / 2; // 50% (100→50...)
+    return points / 2;
   }
 
   function isFinished() {
@@ -80,8 +77,7 @@
 
   function canPick(points) {
     const g = groupForPoints(points);
-    if (!g) return false;
-    if (isFinished()) return false;
+    if (!g || isFinished()) return false;
     return state.pickedByGroup[g] < LIMITS[g];
   }
 
@@ -104,18 +100,34 @@
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
+  function nowMs() {
+    return Date.now();
+  }
+
+  function getElapsedMs() {
+    if (!state.startedAt) return 0;
+    const end = state.finishedAt || nowMs();
+    return Math.max(0, end - state.startedAt);
+  }
+
+  function formatElapsed(ms) {
+    const totalSec = Math.max(0, Math.floor(ms / 1000));
+    const min = Math.floor(totalSec / 60);
+    const sec = totalSec % 60;
+    return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  }
+
   function init({ teamName, teacherSettings } = {}) {
     state.teamName = (teamName || "Tým").trim() || "Tým";
     state.allowedTopicIds = teacherSettings?.allowedTopicIds || null;
-
     state.usedIds = new Set();
     state.current = null;
-
     state.totalPicked = 0;
     state.pickedByGroup = { A: 0, B: 0, C: 0 };
     state.riskUsedByGroup = { A: 0, B: 0, C: 0 };
-
     state.rawScore = 0;
+    state.startedAt = nowMs();
+    state.finishedAt = null;
   }
 
   function reset() {
@@ -128,7 +140,6 @@
 
     const g = groupForPoints(points);
     if (!g) return null;
-
     if (!canPick(points)) return null;
     if (mode === "risk" && !canRisk(points)) return null;
 
@@ -141,7 +152,6 @@
     const q = pickRandom(pool);
     if (!q) return null;
 
-    // rezervuj otázku + zapiš tah (kvóty)
     state.usedIds.add(q.id);
     state.totalPicked += 1;
     state.pickedByGroup[g] += 1;
@@ -181,6 +191,10 @@
     }
 
     state.current = null;
+
+    if (isFinished() && !state.finishedAt) {
+      state.finishedAt = nowMs();
+    }
   }
 
   function getResult() {
@@ -188,8 +202,19 @@
     const scaled = (raw / RAW_MAX) * 20;
     const stationPoints = Math.ceil(scaled);
     const ratio = RAW_MAX > 0 ? (raw / RAW_MAX) : 0;
+    const elapsedMs = getElapsedMs();
 
-    return { rawScore: raw, rawMax: RAW_MAX, scaled, stationPoints, ratio };
+    return {
+      teamName: state.teamName,
+      rawScore: raw,
+      rawMax: RAW_MAX,
+      scaled,
+      stationPoints,
+      ratio,
+      elapsedMs,
+      elapsedText: formatElapsed(elapsedMs),
+      finishedAt: state.finishedAt,
+    };
   }
 
   function getBoardView() {
@@ -213,7 +238,6 @@
             const rem = remainingFor(t.id, p);
             const pickOk = canPick(p);
             const riskOk = canRisk(p);
-
             const disabled = (rem <= 0) || !pickOk;
             return {
               topicId: t.id,
@@ -241,25 +265,51 @@
       progressText,
       countersText,
       groups,
+      timerText: formatElapsed(getElapsedMs()),
       hint: isFinished() ? "Hotovo – zobrazte výsledek." : "",
     };
   }
 
-  function getRulesText() {
-    return window.DATA?.RULES || "";
+  function getRulesData() {
+    return [
+      {
+        title: "Cíl hry",
+        text: "Tým postupně vybere 10 otázek a snaží se získat co nejvíce bodů."
+      },
+      {
+        title: "Skupiny otázek",
+        text: "Ve hře jsou skupiny A (100–200), B (300–400) a C (500). Během hry odpovíte na 2 otázky ze skupiny A, 6 otázek ze skupiny B a 2 otázky ze skupiny C."
+      },
+      {
+        title: "Bez risku",
+        text: "Správná odpověď přidá plnou hodnotu otázky. Špatná odpověď nepřidá nic."
+      },
+      {
+        title: "Riskuj",
+        text: "Správná odpověď přidá hodnotu otázky a bonus 50 %. Špatná odpověď odečte 100 bodů."
+      },
+      {
+        title: "Počet risků",
+        text: "Riskovat lze maximálně 2× ve skupině A, 2× ve skupině B a 2× ve skupině C."
+      },
+      {
+        title: "Pořadí v žebříčku",
+        text: "Po 10. otázce se výsledek přepočítá na body stanoviště 0–20. Do žebříčku se ukládají RAW body, přepočet i celkový čas. Při shodě rozhoduje kratší čas."
+      }
+    ];
   }
 
   window.Game = {
     init,
     reset,
-
     pickQuestion,
     resolveAnswer,
-
     getBoardView,
     isFinished,
     getResult,
-
-    getRulesText,
+    getElapsedMs,
+    formatElapsed,
+    getRulesData,
   };
 })();
+
