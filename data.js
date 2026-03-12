@@ -240,11 +240,41 @@
 
   // Text pravidel – můžeš rovnou promítat v modalu
   const RULES = [
-    "🎯 Cíl: sbírat body výběrem otázek podle témat a hodnot.",
-    "🃏 Na kartě otázky jsou dvě volby: Bez risku / Riskuj.",
-    "✅ Po vyčerpání otázek v dané kombinaci (téma + body + režim dle vašich pravidel) se karta zašedí a nejde kliknout.",
-    "👩‍🏫 Učitelský modul (skrytý) umí lokálně povolit/zakázat témata pro dané zařízení.",
-  ].join("\n");
+"🎯 Cíl hry",
+"Tým postupně vybere 10 otázek a snaží se získat co nejvíce bodů.",
+"",
+"📂 Kategorie otázek",
+"A – otázky za 100 a 200 bodů",
+"B – otázky za 300 a 400 bodů",
+"C – otázky za 500 bodů",
+"",
+"🎲 Režimy odpovědi",
+"",
+"Bez risku:",
+"✔ správně = získáte plný počet bodů",
+"✖ špatně = 0 bodů",
+"",
+"Riskuj:",
+"✔ správně = body za otázku + bonus 50 %",
+"✖ špatně = −100 bodů",
+"",
+"📊 Příklad (otázka za 500 bodů)",
+"",
+"Riskuj:",
+"✔ správně = 750 bodů",
+"✖ špatně = −100 bodů",
+"",
+"Bez risku:",
+"✔ správně = 500 bodů",
+"✖ špatně = 0 bodů",
+"",
+"📌 Ve hře odpovíte na 10 otázek:",
+"2× skupina A",
+"6× skupina B",
+"2× skupina C",
+"",
+"⚠ Riskovat lze maximálně 2× v každé skupině."
+].join("\n");
 
   // Export do globálu
   window.DATA = {
