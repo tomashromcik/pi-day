@@ -21,6 +21,7 @@
   const rulesModal = $("#rulesModal");
   const teacherModal = $("#teacherModal");
   const resultModal = $("#resultModal");
+  const leaderboardModal = $("#leaderboardModal");
 
   function openModal(modalEl) {
     if (!modalEl) return;
@@ -45,12 +46,14 @@
   wireModalClose(rulesModal);
   wireModalClose(teacherModal);
   wireModalClose(resultModal);
+  wireModalClose(leaderboardModal);
 
   on(document, "keydown", (e) => {
     if (e.key !== "Escape") return;
     if (rulesModal && !rulesModal.classList.contains("is-hidden")) closeModal(rulesModal);
     if (teacherModal && !teacherModal.classList.contains("is-hidden")) closeModal(teacherModal);
     if (resultModal && !resultModal.classList.contains("is-hidden")) closeModal(resultModal);
+    if (leaderboardModal && !leaderboardModal.classList.contains("is-hidden")) closeModal(leaderboardModal);
   });
 
   const AppState = {
@@ -102,6 +105,9 @@
     leaderboardEmpty: $("#leaderboardEmpty"),
     btnExportCsv: $("#btnExportCsv"),
     btnClearLeaderboard: $("#btnClearLeaderboard"),
+
+    btnOpenLeaderboard: $("#btnOpenLeaderboard"),
+    btnCloseLeaderboard: $("#btnCloseLeaderboard"),
   };
 
   const hasGame = typeof window.Game !== "undefined";
@@ -483,6 +489,8 @@
   }
 
   function wireEvents() {
+    on(el.btnOpenLeaderboard, "click", () => openModal(leaderboardModal));
+    on(el.btnCloseLeaderboard, "click", () => closeModal(leaderboardModal));
     on(el.btnStartGame, "click", handleStartGame);
     on(el.btnShowRules, "click", () => {
       renderRules();
