@@ -947,7 +947,8 @@ select:focus, input:focus{
 }
 
 .rules-demo .topic-row{
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 160px 1fr;
+  gap: 14px;
   align-items: start;
 }
 
@@ -1023,4 +1024,21 @@ select:focus, input:focus{
   .rules-demo .topic-row__groups{
     grid-template-columns: 1fr;
   }
+}
+.rules-demo .topic-row__topic{
+  padding: 10px;
+  border-radius: 12px;
+  min-height: 120px;
+}
+.rules-demo .topic-row__topic{
+  padding: 10px;
+  border-radius: 12px;
+  min-height: 120px;
+}
+.rules-demo .topic-row__topicName{
+  font-size: 15px;
+}
+
+.rules-demo .topic-row__topicMini{
+  font-size: 12px;
 }
