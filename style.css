@@ -1022,6 +1022,10 @@ select:focus, input:focus{
     grid-template-columns: 1fr;
   }
 
+   .start-layout{
+  display: block;
+}
+
   .rules-demo .topic-row__groups{
     grid-template-columns: 1fr;
   }
