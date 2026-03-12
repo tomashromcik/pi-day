@@ -4,13 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>RISKuj - πdi kvíz</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style_updated.css" />
 </head>
 
 <body>
   <div id="app">
 
-    <!-- Header -->
     <header class="app-header">
       <div class="app-title">
         <span class="app-title__logo" aria-hidden="true">π</span>
@@ -26,35 +25,67 @@
 
     <main class="app-main">
 
-      <!-- SCREEN: START -->
       <section id="screenStart" class="screen is-active" data-screen="start" aria-label="Úvodní obrazovka">
-        <div class="card">
-          <h1>πdi kvíz</h1>
-          <p class="muted">Zadejte název týmu. Pravidla si můžete promítnout.</p>
+        <div class="card card--start">
+          <div class="start-layout">
+            <div>
+              <h1>πdi kvíz</h1>
+              <p class="muted">Zadejte název týmu. Pravidla i žebříček máte rovnou po ruce.</p>
 
-          <div class="form-row">
-            <label for="teamName">Název týmu</label>
-            <input id="teamName" type="text" placeholder="např. Pí-šmodrchasové" maxlength="40" />
+              <div class="form-row">
+                <label for="teamName">Název týmu</label>
+                <input id="teamName" type="text" placeholder="např. Pí-šmodrchasové" maxlength="40" />
+              </div>
+
+              <div class="actions actions--row">
+                <button id="btnShowRules" class="btn" type="button" aria-haspopup="dialog">Zobrazit pravidla</button>
+                <button id="btnStartGame" class="btn btn--primary" type="button">Riskuj</button>
+              </div>
+
+              <p id="startHint" class="hint"></p>
+            </div>
+
+            <aside class="panel leaderboard-panel">
+              <div class="panel__head">
+                <div>
+                  <h2 class="panel__title">Žebříček</h2>
+                  <div class="panel__meta muted">Body stanoviště, přepočet a čas</div>
+                </div>
+                <div class="panel__actions">
+                  <button id="btnExportCsv" class="btn btn--small" type="button">Export CSV</button>
+                  <button id="btnClearLeaderboard" class="btn btn--small btn--ghost" type="button">Smazat</button>
+                </div>
+              </div>
+
+              <div id="leaderboardEmpty" class="muted">Zatím není uložen žádný výsledek.</div>
+              <div class="table-wrap">
+                <table class="leaderboard-table" id="leaderboardTable">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Tým</th>
+                      <th>Body</th>
+                      <th>Přepočet</th>
+                      <th>RAW</th>
+                      <th>Čas</th>
+                    </tr>
+                  </thead>
+                  <tbody id="leaderboardBody"></tbody>
+                </table>
+              </div>
+            </aside>
           </div>
-
-          <div class="actions actions--row">
-            <button id="btnShowRules" class="btn" type="button" aria-haspopup="dialog">Zobrazit pravidla</button>
-            <button id="btnStartGame" class="btn btn--primary" type="button">Riskuj</button>
-          </div>
-
-          <p id="startHint" class="hint"></p>
         </div>
       </section>
 
-      <!-- SCREEN: GAMEBOARD (NOVĚ: 3 sloupce A/B/C a všechna témata najednou) -->
       <section id="screenBoard" class="screen" data-screen="board" aria-label="Herní plocha">
         <div class="board2">
-
           <div class="panel panel--sticky board2__head">
             <div class="panel__head">
               <h2 class="panel__title">Herní plocha</h2>
               <div class="panel__meta muted" id="boardProgress">Otázky: 0/10</div>
-              <div class="panel__actions">
+              <div class="panel__actions panel__actions--stack-mobile">
+                <div id="boardTimer" class="badge">Čas: 00:00</div>
                 <button id="btnBackToStart" class="btn btn--ghost" type="button">Ukončit</button>
               </div>
             </div>
@@ -65,12 +96,10 @@
           </div>
 
           <div id="boardColumns" class="board2__cols"></div>
-
           <p id="boardHint" class="hint"></p>
         </div>
       </section>
 
-      <!-- SCREEN: QUESTION -->
       <section id="screenQuestion" class="screen" data-screen="question" aria-label="Zobrazení otázky">
         <div class="card">
           <div class="qtopbar">
@@ -106,7 +135,6 @@
     </footer>
   </div>
 
-  <!-- RULES MODAL -->
   <div id="rulesModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
     <div class="modal__backdrop" data-close-modal></div>
     <div class="modal__content" role="document">
@@ -115,14 +143,11 @@
         <button id="btnCloseRules" class="btn btn--ghost" type="button" aria-label="Zavřít">✕</button>
       </div>
       <div class="modal__body">
-        <div id="rulesText" class="rules">
-          <p class="muted">Sem dáme pravidla (stručně, přehledně, promítatelné).</p>
-        </div>
+        <div id="rulesText" class="rules"></div>
       </div>
     </div>
   </div>
 
-  <!-- TEACHER MODAL -->
   <div id="teacherModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="teacherTitle">
     <div class="modal__backdrop" data-close-modal></div>
     <div class="modal__content" role="document">
@@ -149,7 +174,6 @@
     </div>
   </div>
 
-  <!-- RESULT MODAL (po 10. otázce) -->
   <div id="resultModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
     <div class="modal__backdrop" data-close-modal></div>
     <div class="modal__content" role="document">
@@ -161,6 +185,7 @@
         <div id="resultBody" class="rules"></div>
 
         <div class="actions actions--row">
+          <button id="btnResultExportCsv" class="btn" type="button">Export CSV</button>
           <button id="btnNewGame" class="btn" type="button">Nová hra</button>
           <button id="btnBackHome" class="btn btn--primary" type="button">Zpět na úvod</button>
         </div>
@@ -168,10 +193,9 @@
     </div>
   </div>
 
-  <!-- Scripts -->
   <script src="data.js"></script>
   <script src="teacher.js"></script>
-  <script src="game.js"></script>
-  <script src="main.js"></script>
+  <script src="game_updated.js"></script>
+  <script src="main_updated.js"></script>
 </body>
 </html>
