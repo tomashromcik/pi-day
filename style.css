@@ -512,7 +512,7 @@ select:focus, input:focus{
 
 .modal__content{
   position: relative;
-  width: min(720px, 100%);
+  width: min(1000px, 100%);
   background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
   border: 1px solid var(--border);
   border-radius: var(--radius);
