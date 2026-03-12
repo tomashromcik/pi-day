@@ -38,7 +38,10 @@
   function wireModalClose(modalEl) {
     if (!modalEl) return;
     on(modalEl, "click", (e) => {
-      const closeHit = e.target && (e.target.hasAttribute("data-close-modal") || e.target.closest("[data-close-modal]"));
+      const closeHit =
+        e.target &&
+        (e.target.hasAttribute("data-close-modal") ||
+          e.target.closest("[data-close-modal]"));
       if (closeHit) closeModal(modalEl);
     });
   }
@@ -63,11 +66,14 @@
   };
 
   const el = {
+    // start
     teamName: $("#teamName"),
     btnStartGame: $("#btnStartGame"),
     btnShowRules: $("#btnShowRules"),
+    btnOpenLeaderboard: $("#btnOpenLeaderboard"),
     startHint: $("#startHint"),
 
+    // board
     btnBackToStart: $("#btnBackToStart"),
     boardColumns: $("#boardColumns"),
     boardProgress: $("#boardProgress"),
@@ -75,6 +81,7 @@
     boardHint: $("#boardHint"),
     boardTimer: $("#boardTimer"),
 
+    // question
     btnCloseQuestion: $("#btnCloseQuestion"),
     qStatus: $("#qStatus"),
     qText: $("#qText"),
@@ -84,9 +91,11 @@
     btnMarkCorrect: $("#btnMarkCorrect"),
     btnMarkWrong: $("#btnMarkWrong"),
 
+    // rules
     btnCloseRules: $("#btnCloseRules"),
     rulesText: $("#rulesText"),
 
+    // teacher
     btnOpenTeacher: $("#btnOpenTeacher"),
     btnCloseTeacher: $("#btnCloseTeacher"),
     btnTeacherReset: $("#btnTeacherReset"),
@@ -94,20 +103,20 @@
     teacherTopicsList: $("#teacherTopicsList"),
     teacherHint: $("#teacherHint"),
 
+    // result
     btnCloseResult: $("#btnCloseResult"),
     resultBody: $("#resultBody"),
     btnNewGame: $("#btnNewGame"),
     btnBackHome: $("#btnBackHome"),
     btnResultExportCsv: $("#btnResultExportCsv"),
 
+    // leaderboard modal
+    btnCloseLeaderboard: $("#btnCloseLeaderboard"),
     leaderboardBody: $("#leaderboardBody"),
     leaderboardTable: $("#leaderboardTable"),
     leaderboardEmpty: $("#leaderboardEmpty"),
     btnExportCsv: $("#btnExportCsv"),
     btnClearLeaderboard: $("#btnClearLeaderboard"),
-
-    btnOpenLeaderboard: $("#btnOpenLeaderboard"),
-    btnCloseLeaderboard: $("#btnCloseLeaderboard"),
   };
 
   const hasGame = typeof window.Game !== "undefined";
@@ -118,7 +127,11 @@
   }
 
   function safeParse(json, fallback) {
-    try { return JSON.parse(json); } catch { return fallback; }
+    try {
+      return JSON.parse(json);
+    } catch {
+      return fallback;
+    }
   }
 
   function tintForPoints(points) {
@@ -142,9 +155,15 @@
 
   function sortResults(items) {
     return items.slice().sort((a, b) => {
-      if ((b.stationPoints || 0) !== (a.stationPoints || 0)) return (b.stationPoints || 0) - (a.stationPoints || 0);
-      if ((b.scaled || 0) !== (a.scaled || 0)) return (b.scaled || 0) - (a.scaled || 0);
-      if ((b.rawScore || 0) !== (a.rawScore || 0)) return (b.rawScore || 0) - (a.rawScore || 0);
+      if ((b.stationPoints || 0) !== (a.stationPoints || 0)) {
+        return (b.stationPoints || 0) - (a.stationPoints || 0);
+      }
+      if ((b.scaled || 0) !== (a.scaled || 0)) {
+        return (b.scaled || 0) - (a.scaled || 0);
+      }
+      if ((b.rawScore || 0) !== (a.rawScore || 0)) {
+        return (b.rawScore || 0) - (a.rawScore || 0);
+      }
       return (a.elapsedMs || 0) - (b.elapsedMs || 0);
     });
   }
@@ -174,12 +193,15 @@
   }
 
   function renderLeaderboard() {
+    if (!el.leaderboardBody || !el.leaderboardTable || !el.leaderboardEmpty) return;
+
     const items = sortResults(getStoredResults());
     clear(el.leaderboardBody);
 
     const hasRows = items.length > 0;
-    if (el.leaderboardEmpty) el.leaderboardEmpty.classList.toggle("is-hidden", hasRows);
-    if (el.leaderboardTable) el.leaderboardTable.classList.toggle("is-hidden", !hasRows);
+    el.leaderboardEmpty.classList.toggle("is-hidden", hasRows);
+    el.leaderboardTable.classList.toggle("is-hidden", !hasRows);
+
     if (!hasRows) return;
 
     items.forEach((item, idx) => {
@@ -192,7 +214,7 @@
         <td>${item.rawScore ?? 0}</td>
         <td>${escapeHtml(item.elapsedText || formatTime(item.elapsedMs || 0))}</td>
       `;
-      el.leaderboardBody?.appendChild(tr);
+      el.leaderboardBody.appendChild(tr);
     });
   }
 
@@ -203,7 +225,17 @@
       return;
     }
 
-    const header = ["poradi", "tym", "body_stanoviste", "prepocet", "raw_body", "raw_max", "cas", "odehrano"];
+    const header = [
+      "poradi",
+      "tym",
+      "body_stanoviste",
+      "prepocet",
+      "raw_body",
+      "raw_max",
+      "cas",
+      "odehrano",
+    ];
+
     const rows = items.map((item, idx) => [
       idx + 1,
       item.teamName || "Tým",
@@ -216,7 +248,7 @@
     ]);
 
     const csv = [header, ...rows]
-      .map(row => row.map(csvCell).join(";"))
+      .map((row) => row.map(csvCell).join(";"))
       .join("\n");
 
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
@@ -240,7 +272,7 @@
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
+      .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
   }
 
@@ -256,12 +288,21 @@
   function renderRules() {
     const items = window.Game?.getRulesData?.() || [];
     if (!el.rulesText) return;
-    el.rulesText.innerHTML = `<div class="rules__list">${items.map(item => `
-      <div class="rules__item">
-        <strong>${escapeHtml(item.title)}</strong>
-        <div>${escapeHtml(item.text)}</div>
+
+    el.rulesText.innerHTML = `
+      <div class="rules__list">
+        ${items
+          .map(
+            (item) => `
+          <div class="rules__item">
+            <strong>${escapeHtml(item.title)}</strong>
+            <div>${escapeHtml(item.text)}</div>
+          </div>
+        `
+          )
+          .join("")}
       </div>
-    `).join("")}</div>`;
+    `;
   }
 
   function renderBoardAll(view) {
@@ -299,9 +340,9 @@
       const mini = document.createElement("div");
       mini.className = "topic-row__topicMini";
       const remaining =
-        tA.cards.filter(c => !c.isDisabled).length +
-        tB.cards.filter(c => !c.isDisabled).length +
-        tC.cards.filter(c => !c.isDisabled).length;
+        tA.cards.filter((c) => !c.isDisabled).length +
+        tB.cards.filter((c) => !c.isDisabled).length +
+        tC.cards.filter((c) => !c.isDisabled).length;
       mini.textContent = `zbývá: ${remaining}`;
 
       topicCard.appendChild(nm);
@@ -310,7 +351,7 @@
       const groupsWrap = document.createElement("div");
       groupsWrap.className = "topic-row__groups";
 
-      ["A", "B", "C"].forEach(key => {
+      ["A", "B", "C"].forEach((key) => {
         const group = groups[key];
         const topic = group.topics[i];
 
@@ -320,12 +361,13 @@
 
         const title = document.createElement("div");
         title.className = "group-box__title";
-        title.textContent = key === "A" ? "A (100–200)" : key === "B" ? "B (300–400)" : "C (500)";
+        title.textContent =
+          key === "A" ? "A (100–200)" : key === "B" ? "B (300–400)" : "C (500)";
 
         const cardsWrap = document.createElement("div");
         cardsWrap.className = "group-box__cards";
 
-        topic.cards.forEach(c => {
+        topic.cards.forEach((c) => {
           const art = document.createElement("article");
           art.className = "qcard";
           if (c.isDisabled) art.classList.add("is-disabled");
@@ -398,9 +440,10 @@
     AppState.teamName = (el.teamName?.value || "").trim() || "Tým";
     AppState.resultSavedForRun = false;
 
-    const teacherSettings = (hasTeacher && typeof window.Teacher.getSettings === "function")
-      ? window.Teacher.getSettings()
-      : null;
+    const teacherSettings =
+      hasTeacher && typeof window.Teacher.getSettings === "function"
+        ? window.Teacher.getSettings()
+        : null;
 
     window.Game?.init?.({ teamName: AppState.teamName, teacherSettings });
     renderRules();
@@ -431,7 +474,7 @@
       renderLeaderboard();
     }
 
-    const percent = Math.round((r.ratio * 100) * 10) / 10;
+    const percent = Math.round(r.ratio * 100 * 10) / 10;
 
     el.resultBody.innerHTML = `
       <div class="result-grid">
@@ -489,13 +532,20 @@
   }
 
   function wireEvents() {
-    on(el.btnOpenLeaderboard, "click", () => openModal(leaderboardModal));
+    on(el.btnOpenLeaderboard, "click", () => {
+      renderLeaderboard();
+      openModal(leaderboardModal);
+    });
+
     on(el.btnCloseLeaderboard, "click", () => closeModal(leaderboardModal));
+
     on(el.btnStartGame, "click", handleStartGame);
+
     on(el.btnShowRules, "click", () => {
       renderRules();
       openModal(rulesModal);
     });
+
     on(el.btnCloseRules, "click", () => closeModal(rulesModal));
 
     on(el.btnBackToStart, "click", () => {
@@ -526,34 +576,48 @@
     on(el.btnMarkWrong, "click", () => handleMarkAnswer(false));
 
     on(el.btnOpenTeacher, "click", () => {
-      window.Teacher?.render?.({ container: el.teacherTopicsList, hintEl: el.teacherHint });
+      window.Teacher?.render?.({
+        container: el.teacherTopicsList,
+        hintEl: el.teacherHint,
+      });
       openModal(teacherModal);
     });
+
     on(el.btnCloseTeacher, "click", () => closeModal(teacherModal));
+
     on(el.btnTeacherReset, "click", () => {
       window.Teacher?.reset?.();
-      window.Teacher?.render?.({ container: el.teacherTopicsList, hintEl: el.teacherHint });
+      window.Teacher?.render?.({
+        container: el.teacherTopicsList,
+        hintEl: el.teacherHint,
+      });
     });
+
     on(el.btnTeacherSave, "click", () => {
       window.Teacher?.saveFromUI?.();
-      window.Teacher?.render?.({ container: el.teacherTopicsList, hintEl: el.teacherHint });
+      window.Teacher?.render?.({
+        container: el.teacherTopicsList,
+        hintEl: el.teacherHint,
+      });
     });
 
     on(el.btnCloseResult, "click", () => closeModal(resultModal));
+
     on(el.btnNewGame, "click", () => {
       closeModal(resultModal);
       resetToBoard();
     });
+
     on(el.btnBackHome, "click", () => {
       closeModal(resultModal);
       stopBoardTimer();
       window.Game?.reset?.();
-      renderLeaderboard();
       showScreen("start");
     });
 
     on(el.btnExportCsv, "click", exportResultsCsv);
     on(el.btnResultExportCsv, "click", exportResultsCsv);
+
     on(el.btnClearLeaderboard, "click", () => {
       const ok = window.confirm("Opravdu smazat celý lokální žebříček?");
       if (ok) clearLeaderboard();
@@ -563,7 +627,6 @@
   function init() {
     wireEvents();
     renderRules();
-    renderLeaderboard();
     refreshBoardFromGame();
     showScreen("start");
   }
