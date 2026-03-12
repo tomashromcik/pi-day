@@ -45,25 +45,6 @@
 
               <p id="startHint" class="hint"></p>
             </div>
-
-           
-              <div id="leaderboardEmpty" class="muted">Zatím není uložen žádný výsledek.</div>
-              <div class="table-wrap">
-                <table class="leaderboard-table" id="leaderboardTable">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Tým</th>
-                      <th>Body</th>
-                      <th>Přepočet</th>
-                      <th>RAW</th>
-                      <th>Čas</th>
-                    </tr>
-                  </thead>
-                  <tbody id="leaderboardBody"></tbody>
-                </table>
-              </div>
-            </aside>
           </div>
         </div>
       </section>
@@ -134,127 +115,119 @@
       </div>
       <div class="modal__body">
         <div id="rulesText" class="rules"></div>
+
         <div class="rules-demo">
+          <h3>Ukázka herní karty</h3>
 
-  <h3>Ukázka herní karty</h3>
-
-  <div class="topic-row">
-
-    <div class="topic-row__topic" style="--topic:#60a5fa">
-      <div class="topic-row__topicName">Ukázkové téma</div>
-      <div class="topic-row__topicMini">zbývá: 5</div>
-    </div>
-
-    <div class="topic-row__groups">
-
-      <div class="group-box" data-group="A">
-        <div class="group-box__title">A (100–200)</div>
-        <div class="group-box__cards">
-
-          <article class="qcard" style="--topic:#60a5fa">
-            <div class="qcard__points">100</div>
-            <div class="qcard__actions">
-              <button class="btn btn--small">Bez risku</button>
-              <button class="btn btn--small btn--primary">Riskuj</button>
+          <div class="topic-row">
+            <div class="topic-row__topic" style="--topic:#60a5fa">
+              <div class="topic-row__topicName">Ukázkové téma</div>
+              <div class="topic-row__topicMini">zbývá: 5</div>
             </div>
-          </article>
 
-          <article class="qcard" style="--topic:#60a5fa">
-            <div class="qcard__points">200</div>
-            <div class="qcard__actions">
-              <button class="btn btn--small">Bez risku</button>
-              <button class="btn btn--small btn--primary">Riskuj</button>
+            <div class="topic-row__groups">
+              <div class="group-box" data-group="A">
+                <div class="group-box__title">A (100–200)</div>
+                <div class="group-box__cards">
+                  <article class="qcard" style="--topic:#60a5fa">
+                    <div class="qcard__points">100</div>
+                    <div class="qcard__actions">
+                      <button class="btn btn--small" type="button">Bez risku</button>
+                      <button class="btn btn--small btn--primary" type="button">Riskuj</button>
+                    </div>
+                  </article>
+
+                  <article class="qcard" style="--topic:#60a5fa">
+                    <div class="qcard__points">200</div>
+                    <div class="qcard__actions">
+                      <button class="btn btn--small" type="button">Bez risku</button>
+                      <button class="btn btn--small btn--primary" type="button">Riskuj</button>
+                    </div>
+                  </article>
+                </div>
+              </div>
+
+              <div class="group-box" data-group="B">
+                <div class="group-box__title">B (300–400)</div>
+                <div class="group-box__cards">
+                  <article class="qcard" style="--topic:#60a5fa">
+                    <div class="qcard__points">300</div>
+                    <div class="qcard__actions">
+                      <button class="btn btn--small" type="button">Bez risku</button>
+                      <button class="btn btn--small btn--primary" type="button">Riskuj</button>
+                    </div>
+                  </article>
+
+                  <article class="qcard" style="--topic:#60a5fa">
+                    <div class="qcard__points">400</div>
+                    <div class="qcard__actions">
+                      <button class="btn btn--small" type="button">Bez risku</button>
+                      <button class="btn btn--small btn--primary" type="button">Riskuj</button>
+                    </div>
+                  </article>
+                </div>
+              </div>
+
+              <div class="group-box" data-group="C">
+                <div class="group-box__title">C (500)</div>
+                <div class="group-box__cards">
+                  <article class="qcard" style="--topic:#60a5fa">
+                    <div class="qcard__points">500</div>
+                    <div class="qcard__actions">
+                      <button class="btn btn--small" type="button">Bez risku</button>
+                      <button class="btn btn--small btn--primary" type="button">Riskuj</button>
+                    </div>
+                  </article>
+                </div>
+              </div>
             </div>
-          </article>
+          </div>
+        </div>
 
+      </div>
+    </div>
+  </div>
+
+  <div id="leaderboardModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="leaderboardTitle">
+    <div class="modal__backdrop" data-close-modal></div>
+    <div class="modal__content" role="document">
+      <div class="modal__header">
+        <h2 id="leaderboardTitle">Žebříček</h2>
+        <button id="btnCloseLeaderboard" class="btn btn--ghost" type="button" aria-label="Zavřít">✕</button>
+      </div>
+
+      <div class="modal__body">
+        <div class="panel__head">
+          <div>
+            <div class="panel__meta muted">Body stanoviště, přepočet a čas</div>
+          </div>
+          <div class="panel__actions">
+            <button id="btnExportCsv" class="btn btn--small" type="button">Export CSV</button>
+            <button id="btnClearLeaderboard" class="btn btn--small btn--ghost" type="button">Smazat</button>
+          </div>
+        </div>
+
+        <div id="leaderboardEmpty" class="muted">Zatím není uložen žádný výsledek.</div>
+
+        <div class="table-wrap">
+          <table class="leaderboard-table" id="leaderboardTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Tým</th>
+                <th>Body</th>
+                <th>Přepočet</th>
+                <th>RAW</th>
+                <th>Čas</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardBody"></tbody>
+          </table>
         </div>
       </div>
-
-     <div class="group-box" data-group="B">
-  <div class="group-box__title">B (300–400)</div>
-  <div class="group-box__cards">
-
-    <article class="qcard" style="--topic:#60a5fa">
-      <div class="qcard__points">300</div>
-      <div class="qcard__actions">
-        <button class="btn btn--small" type="button">Bez risku</button>
-        <button class="btn btn--small btn--primary" type="button">Riskuj</button>
-      </div>
-    </article>
-
-    <article class="qcard" style="--topic:#60a5fa">
-      <div class="qcard__points">400</div>
-      <div class="qcard__actions">
-        <button class="btn btn--small" type="button">Bez risku</button>
-        <button class="btn btn--small btn--primary" type="button">Riskuj</button>
-      </div>
-    </article>
-
-  </div>
-</div>
-
-<div class="group-box" data-group="C">
-  <div class="group-box__title">C (500)</div>
-  <div class="group-box__cards">
-
-    <article class="qcard" style="--topic:#60a5fa">
-      <div class="qcard__points">500</div>
-      <div class="qcard__actions">
-        <button class="btn btn--small" type="button">Bez risku</button>
-        <button class="btn btn--small btn--primary" type="button">Riskuj</button>
-      </div>
-    </article>
-
-  </div>
-</div>
     </div>
   </div>
 
-</div>
-      </div>
-    </div>
-  </div>
-
-<div id="leaderboardModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="leaderboardTitle">
-  <div class="modal__backdrop" data-close-modal></div>
-  <div class="modal__content" role="document">
-    <div class="modal__header">
-      <h2 id="leaderboardTitle">Žebříček</h2>
-      <button id="btnCloseLeaderboard" class="btn btn--ghost" type="button" aria-label="Zavřít">✕</button>
-    </div>
-
-    <div class="modal__body">
-      <div class="panel__head">
-        <div>
-          <div class="panel__meta muted">Body stanoviště, přepočet a čas</div>
-        </div>
-        <div class="panel__actions">
-          <button id="btnExportCsv" class="btn btn--small" type="button">Export CSV</button>
-          <button id="btnClearLeaderboard" class="btn btn--small btn--ghost" type="button">Smazat</button>
-        </div>
-      </div>
-
-      <div id="leaderboardEmpty" class="muted">Zatím není uložen žádný výsledek.</div>
-
-      <div class="table-wrap">
-        <table class="leaderboard-table" id="leaderboardTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Tým</th>
-              <th>Body</th>
-              <th>Přepočet</th>
-              <th>RAW</th>
-              <th>Čas</th>
-            </tr>
-          </thead>
-          <tbody id="leaderboardBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-  
   <div id="teacherModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="teacherTitle">
     <div class="modal__backdrop" data-close-modal></div>
     <div class="modal__content" role="document">
