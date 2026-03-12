@@ -912,14 +912,34 @@ select:focus, input:focus{
   }
 }
 
+/* ===== pravidla / modal / demo ===== */
+
+.modal{
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.modal__backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.78);
+}
+
 .modal__content{
   position: relative;
-  width: min(760px, 100%);
+  width: min(1400px, calc(100vw - 20px));
+  max-height: calc(100vh - 20px);
   background: #101823;
   border: 1px solid rgba(255,255,255,0.14);
   border-radius: var(--radius);
   box-shadow: 0 18px 48px rgba(0,0,0,0.55);
   overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .modal__header{
@@ -934,12 +954,8 @@ select:focus, input:focus{
 .modal__body{
   padding: 16px;
   background: #101823;
-}
-
-.modal__backdrop{
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.78);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .rules-demo{
@@ -947,37 +963,25 @@ select:focus, input:focus{
 }
 
 .rules-demo .topic-row{
-  grid-template-columns: 160px 1fr;
+  grid-template-columns: 140px 1fr;
   gap: 14px;
   align-items: start;
 }
 
-.rules-demo .qcard{
-  min-height: 92px;
+.rules-demo .topic-row__topic{
+  padding: 10px;
+  border-radius: 12px;
+  min-height: 120px;
 }
 
-@media (max-width: 980px){
-  .rules-demo .topic-row{
-    grid-template-columns: 1fr;
-  }
+.rules-demo .topic-row__topicName{
+  font-size: 15px;
+  line-height: 1.15;
 }
 
-.rules__list{
-  display: grid;
-  gap: 8px;
-}
-
-.rules__item{
-  padding: 10px 12px;
-}
-.rules-demo{
-  margin-top: 18px;
-}
-
-.rules-demo .topic-row{
-  grid-template-columns: 240px 1fr;
-  gap: 14px;
-  align-items: start;
+.rules-demo .topic-row__topicMini{
+  margin-top: 4px;
+  font-size: 12px;
 }
 
 .rules-demo .topic-row__groups{
@@ -1008,12 +1012,9 @@ select:focus, input:focus{
 
 .rules-demo .btn--small{
   height: 36px;
-  font-size: 12px;
   padding: 0 10px;
-}
-
-.rules-demo .topic-row__topic{
-  min-height: 100%;
+  border-radius: 10px;
+  font-size: 12px;
 }
 
 @media (max-width: 1100px){
@@ -1024,21 +1025,4 @@ select:focus, input:focus{
   .rules-demo .topic-row__groups{
     grid-template-columns: 1fr;
   }
-}
-.rules-demo .topic-row__topic{
-  padding: 10px;
-  border-radius: 12px;
-  min-height: 120px;
-}
-.rules-demo .topic-row__topic{
-  padding: 10px;
-  border-radius: 12px;
-  min-height: 120px;
-}
-.rules-demo .topic-row__topicName{
-  font-size: 15px;
-}
-
-.rules-demo .topic-row__topicMini{
-  font-size: 12px;
 }
