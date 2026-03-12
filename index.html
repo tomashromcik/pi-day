@@ -39,24 +39,14 @@
 
               <div class="actions actions--row">
                 <button id="btnShowRules" class="btn" type="button" aria-haspopup="dialog">Zobrazit pravidla</button>
+                <button id="btnOpenLeaderboard" class="btn btn--ghost" type="button" aria-haspopup="dialog">Zobrazit žebříček</button>
                 <button id="btnStartGame" class="btn btn--primary" type="button">Riskuj</button>
               </div>
 
               <p id="startHint" class="hint"></p>
             </div>
 
-            <aside class="panel leaderboard-panel">
-              <div class="panel__head">
-                <div>
-                  <h2 class="panel__title">Žebříček</h2>
-                  <div class="panel__meta muted">Body stanoviště, přepočet a čas</div>
-                </div>
-                <div class="panel__actions">
-                  <button id="btnExportCsv" class="btn btn--small" type="button">Export CSV</button>
-                  <button id="btnClearLeaderboard" class="btn btn--small btn--ghost" type="button">Smazat</button>
-                </div>
-              </div>
-
+           
               <div id="leaderboardEmpty" class="muted">Zatím není uložen žádný výsledek.</div>
               <div class="table-wrap">
                 <table class="leaderboard-table" id="leaderboardTable">
@@ -225,6 +215,46 @@
     </div>
   </div>
 
+<div id="leaderboardModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="leaderboardTitle">
+  <div class="modal__backdrop" data-close-modal></div>
+  <div class="modal__content" role="document">
+    <div class="modal__header">
+      <h2 id="leaderboardTitle">Žebříček</h2>
+      <button id="btnCloseLeaderboard" class="btn btn--ghost" type="button" aria-label="Zavřít">✕</button>
+    </div>
+
+    <div class="modal__body">
+      <div class="panel__head">
+        <div>
+          <div class="panel__meta muted">Body stanoviště, přepočet a čas</div>
+        </div>
+        <div class="panel__actions">
+          <button id="btnExportCsv" class="btn btn--small" type="button">Export CSV</button>
+          <button id="btnClearLeaderboard" class="btn btn--small btn--ghost" type="button">Smazat</button>
+        </div>
+      </div>
+
+      <div id="leaderboardEmpty" class="muted">Zatím není uložen žádný výsledek.</div>
+
+      <div class="table-wrap">
+        <table class="leaderboard-table" id="leaderboardTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Tým</th>
+              <th>Body</th>
+              <th>Přepočet</th>
+              <th>RAW</th>
+              <th>Čas</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+  
   <div id="teacherModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="teacherTitle">
     <div class="modal__backdrop" data-close-modal></div>
     <div class="modal__content" role="document">
